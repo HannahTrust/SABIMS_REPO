@@ -13,7 +13,7 @@ class UpdateCommitteeMembersRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user && in_array($user->role, ['admin', 'secretary', 'vice_mayor'], true);
+        return $user && $user->hasRole('admin', 'secretary', 'vice_mayor');
     }
 
     /**

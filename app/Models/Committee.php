@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Committee extends Model
 {
@@ -21,12 +22,21 @@ class Committee extends Model
     ];
 
     /**
-     * Get the users who are members of the committee.
+     * Get the users who are members of the committee (pivot includes is_chair).
      */
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'committee_user')
+            ->withPivot('is_chair')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the resolutions under this committee.
+     */
+    public function resolutions(): HasMany
+    {
+        return $this->hasMany(Resolution::class);
     }
 
     /**

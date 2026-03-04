@@ -143,11 +143,9 @@ export default function CommitteesIndex({
                                     <th className="p-3 font-medium">
                                         Created
                                     </th>
-                                    {canManageMembers && (
-                                        <th className="p-3 font-medium">
-                                            Actions
-                                        </th>
-                                    )}
+                                    <th className="p-3 font-medium">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -172,16 +170,43 @@ export default function CommitteesIndex({
                                                 committee.created_at,
                                             ).toLocaleDateString()}
                                         </td>
-                                        {canManageMembers && (
-                                            <td className="p-3">
-                                                <Link
-                                                    href={`/committees/${committee.id}/manage-members`}
-                                                    className="text-primary underline underline-offset-2 hover:no-underline"
-                                                >
-                                                    Manage members
-                                                </Link>
-                                            </td>
-                                        )}
+                                        <td className="p-3">
+                                            <div className="flex flex-wrap gap-2">
+                                                {canManageMembers && (
+                                                    <Link
+                                                        href={`/committees/${committee.id}/manage-members`}
+                                                        className="text-primary underline underline-offset-2 hover:no-underline"
+                                                    >
+                                                        Manage members
+                                                    </Link>
+                                                )}
+                                                {canCreate && (
+                                                    <>
+                                                        <Link
+                                                            href={`/committees/${committee.id}/edit`}
+                                                            className="text-primary underline underline-offset-2 hover:no-underline"
+                                                        >
+                                                            Edit
+                                                        </Link>
+                                                        <Form
+                                                            action={`/committees/${committee.id}`}
+                                                            method="delete"
+                                                            className="inline"
+                                                            onSubmit={(e) => {
+                                                                if (!confirm('Delete this committee?')) e.preventDefault();
+                                                            }}
+                                                        >
+                                                            <button
+                                                                type="submit"
+                                                                className="text-destructive underline underline-offset-2 hover:no-underline"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </Form>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

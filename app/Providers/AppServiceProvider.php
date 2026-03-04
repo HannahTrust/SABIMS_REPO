@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\CouncilSession;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Route::bind('session', fn (string $value) => CouncilSession::findOrFail($value));
         $this->configureDefaults();
     }
 
