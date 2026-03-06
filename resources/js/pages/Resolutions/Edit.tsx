@@ -18,6 +18,7 @@ type Resolution = {
     session_id: number;
     committee_id: number;
     status: string;
+    visibility: string;
     voting_result: string | null;
     file_path: string | null;
     year: number;
@@ -33,6 +34,10 @@ type Props = {
 };
 
 const STATUS_OPTIONS = ['draft', 'approved', 'archived'];
+const VISIBILITY_OPTIONS = [
+    { value: 'private', label: 'Private' },
+    { value: 'public', label: 'Public' },
+] as const;
 
 export default function ResolutionsEdit({
     resolution,
@@ -163,6 +168,23 @@ export default function ResolutionsEdit({
                                     ))}
                                 </select>
                                 <InputError message={errors.status} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="visibility">Visibility</Label>
+                                <select
+                                    id="visibility"
+                                    name="visibility"
+                                    required
+                                    defaultValue={resolution.visibility ?? 'private'}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                >
+                                    {VISIBILITY_OPTIONS.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.visibility} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="voting_result">

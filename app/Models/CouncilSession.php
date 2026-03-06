@@ -14,7 +14,9 @@ class CouncilSession extends Model
     protected $fillable = [
         'session_date',
         'agenda',
+        'minutes_type',
         'minutes_file',
+        'minutes_content',
         'created_by',
     ];
 
@@ -24,6 +26,31 @@ class CouncilSession extends Model
         return [
             'session_date' => 'date',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (self $session): void {
+            $sbMemberIds = User::query()
+                ->where('role', 'sb_member')
+                ->pluck('id');
+
+            if ($sbMemberIds->isEmpty()) {
+                return;
+            }
+
+            $now = now();
+            $rows = $sbMemberIds->map(fn (int $userId): array => [
+                'session_id' => $session->id,
+                'user_id' => $userId,
+                'status' => Attendance::STATUS_ABSENT,
+                'remarks' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])->all();
+
+            Attendance::query()->insert($rows);
+        });
     }
 
     public function createdBy(): BelongsTo

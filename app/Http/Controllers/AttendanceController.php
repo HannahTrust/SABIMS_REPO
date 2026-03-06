@@ -38,6 +38,7 @@ class AttendanceController extends Controller
                 'user_id' => $a->user_id,
                 'user' => $a->user ? ['id' => $a->user->id, 'name' => $a->user->name] : null,
                 'status' => $a->status,
+                'reason' => $a->reason,
                 'remarks' => $a->remarks,
             ])->values()->all(),
             'canUpdate' => $canUpdate,
@@ -51,7 +52,7 @@ class AttendanceController extends Controller
     {
         $attendance->update([
             'status' => $request->validated('status'),
-            'remarks' => $request->validated('remarks'),
+            'reason' => $request->validated('reason'),
         ]);
 
         return redirect()->back()->with('status', 'Attendance updated.');

@@ -41,24 +41,24 @@ class CouncilSessionController extends Controller
 
     public function store(StoreCouncilSessionRequest $request): RedirectResponse
     {
-        $session = CouncilSession::create([
+        $minutesType = $request->input('minutes_type', 'upload');
+        $minutesFile = null;
+        $minutesContent = null;
+
+        if ($minutesType === 'text') {
+            $minutesContent = $request->input('minutes_content');
+        } elseif ($request->hasFile('minutes_file')) {
+            $minutesFile = $request->file('minutes_file')->store('minutes', 'public');
+        }
+
+        CouncilSession::create([
             'session_date' => $request->validated('session_date'),
             'agenda' => $request->validated('agenda'),
-            'minutes_file' => $request->validated('minutes_file'),
+            'minutes_type' => $minutesType,
+            'minutes_file' => $minutesFile,
+            'minutes_content' => $minutesContent,
             'created_by' => $request->user()->id,
         ]);
-
-        $sbMemberIds = User::query()
-            ->where('role', 'sb_member')
-            ->pluck('id');
-
-        foreach ($sbMemberIds as $userId) {
-            Attendance::create([
-                'session_id' => $session->id,
-                'user_id' => $userId,
-                'status' => Attendance::STATUS_ABSENT,
-            ]);
-        }
 
         return redirect()->route('sessions.index')->with('status', 'Session created successfully.');
     }
@@ -82,6 +82,7 @@ class CouncilSessionController extends Controller
                     'user_id' => $a->user_id,
                     'user' => $a->user ? ['id' => $a->user->id, 'name' => $a->user->name] : null,
                     'status' => $a->status,
+                    'reason' => $a->reason,
                 ])->values()->all(),
                 'resolutions' => $session->resolutions->map(fn ($r) => [
                     'id' => $r->id,

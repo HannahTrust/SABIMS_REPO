@@ -27,6 +27,7 @@ class UpdateResolutionRequest extends FormRequest
             'session_id' => ['required', 'exists:council_sessions,id'],
             'committee_id' => ['required', 'exists:committees,id'],
             'status' => ['required', 'string', Rule::in(Resolution::statuses())],
+            'visibility' => ['required', 'string', Rule::in(Resolution::visibilities())],
             'voting_result' => ['nullable', 'string', 'max:255'],
             'file_path' => ['nullable', 'string', 'max:255'],
             'year' => ['required', 'integer', 'min:2000', 'max:2100'],

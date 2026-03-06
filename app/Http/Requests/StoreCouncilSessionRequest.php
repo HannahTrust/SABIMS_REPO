@@ -20,7 +20,9 @@ class StoreCouncilSessionRequest extends FormRequest
         return [
             'session_date' => ['required', 'date'],
             'agenda' => ['nullable', 'string', 'max:65535'],
-            'minutes_file' => ['nullable', 'string', 'max:255'],
+            'minutes_type' => ['nullable', 'in:upload,text'],
+            'minutes_file' => ['nullable', 'file', 'mimes:pdf,doc,docx'],
+            'minutes_content' => ['nullable', 'string'],
         ];
     }
 }

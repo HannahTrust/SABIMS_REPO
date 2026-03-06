@@ -45,9 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('attendance/{attendance}', [AttendanceController::class, 'update'])->middleware('role:secretary')->name('attendance.update');
 
     // Resolutions: secretary CRUD; vice_mayor + sb_member read-only (sb_member filtered by committees in controller)
-    Route::get('resolutions', [ResolutionController::class, 'index'])->middleware('role:secretary,vice_mayor,sb_member')->name('resolutions.index');
+    Route::get('resolutions', [ResolutionController::class, 'index'])->middleware('role:secretary,vice_mayor,sb_member,admin')->name('resolutions.index');
     Route::get('resolutions/create', [ResolutionController::class, 'create'])->middleware('role:secretary')->name('resolutions.create');
     Route::post('resolutions', [ResolutionController::class, 'store'])->middleware('role:secretary')->name('resolutions.store');
+    Route::get('resolutions/{resolution}', [ResolutionController::class, 'show'])->name('resolutions.show');
     Route::get('resolutions/{resolution}/edit', [ResolutionController::class, 'edit'])->middleware('role:secretary')->name('resolutions.edit');
     Route::put('resolutions/{resolution}', [ResolutionController::class, 'update'])->middleware('role:secretary')->name('resolutions.update');
     Route::delete('resolutions/{resolution}', [ResolutionController::class, 'destroy'])->middleware('role:secretary')->name('resolutions.destroy');

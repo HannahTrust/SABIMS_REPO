@@ -19,9 +19,13 @@ class ResolutionController extends Controller
         $user = $request->user();
         $query = Resolution::query()->with(['session:id,session_date', 'committee:id,name', 'createdBy:id,name']);
 
-        if ($user && $user->role === 'sb_member') {
-            $committeeIds = $user->committees()->pluck('committees.id');
-            $query->whereIn('committee_id', $committeeIds);
+        if (! $user || ! $user->hasRole('admin', 'vice_mayor', 'secretary', 'sb_member')) {
+            $query->where('visibility', 'public');
+        } else {
+            if ($user->role === 'sb_member') {
+                $committeeIds = $user->committees()->pluck('committees.id');
+                $query->whereIn('committee_id', $committeeIds);
+            }
         }
 
         $resolutions = $query->orderByDesc('year')->orderBy('resolution_number')->get();
@@ -56,12 +60,44 @@ class ResolutionController extends Controller
             'session_id' => $request->validated('session_id'),
             'committee_id' => $request->validated('committee_id'),
             'status' => $request->validated('status'),
+            'visibility' => $request->validated('visibility'),
             'voting_result' => $request->validated('voting_result'),
             'file_path' => $request->validated('file_path'),
             'year' => $request->validated('year'),
             'created_by' => $request->user()->id,
         ]);
         return redirect()->route('resolutions.index')->with('status', 'Resolution created successfully.');
+    }
+
+    public function show(Request $request, Resolution $resolution): Response
+    {
+        if ($resolution->visibility === 'private') {
+            $user = $request->user();
+            if (! $user || ! $user->hasRole('admin', 'vice_mayor', 'secretary', 'sb_member')) {
+                abort(403, 'You are not authorized to view this resolution.');
+            }
+        }
+        $resolution->load(['session:id,session_date', 'committee:id,name', 'createdBy:id,name']);
+        $user = $request->user();
+        return Inertia::render('Resolutions/Show', [
+            'resolution' => [
+                'id' => $resolution->id,
+                'resolution_number' => $resolution->resolution_number,
+                'title' => $resolution->title,
+                'description' => $resolution->description,
+                'session_id' => $resolution->session_id,
+                'committee_id' => $resolution->committee_id,
+                'status' => $resolution->status,
+                'visibility' => $resolution->visibility ?? 'private',
+                'voting_result' => $resolution->voting_result,
+                'file_path' => $resolution->file_path,
+                'year' => $resolution->year,
+                'session' => $resolution->session ? ['id' => $resolution->session->id, 'session_date' => $resolution->session->session_date->toDateString()] : null,
+                'committee' => $resolution->committee ? ['id' => $resolution->committee->id, 'name' => $resolution->committee->name] : null,
+                'created_by' => $resolution->createdBy ? ['id' => $resolution->createdBy->id, 'name' => $resolution->createdBy->name] : null,
+            ],
+            'canEdit' => $user && $user->role === 'secretary',
+        ]);
     }
 
     public function edit(Request $request, Resolution $resolution): Response|RedirectResponse
@@ -81,6 +117,7 @@ class ResolutionController extends Controller
                 'session_id' => $resolution->session_id,
                 'committee_id' => $resolution->committee_id,
                 'status' => $resolution->status,
+                'visibility' => $resolution->visibility ?? 'private',
                 'voting_result' => $resolution->voting_result,
                 'file_path' => $resolution->file_path,
                 'year' => $resolution->year,

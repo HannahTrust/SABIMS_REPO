@@ -12,6 +12,7 @@ class Attendance extends Model
         'session_id',
         'user_id',
         'status',
+        'reason',
         'remarks',
     ];
 

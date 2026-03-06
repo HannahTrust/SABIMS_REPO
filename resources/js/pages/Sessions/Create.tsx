@@ -23,9 +23,15 @@ export default function SessionsCreate(_props: Props) {
                     action="/sessions"
                     method="post"
                     className="max-w-md space-y-4"
+                    encType="multipart/form-data"
                 >
                     {({ processing, errors }) => (
                         <>
+                            <input
+                                type="hidden"
+                                name="minutes_type"
+                                value="upload"
+                            />
                             <div className="grid gap-2">
                                 <Label htmlFor="session_date">Session Date</Label>
                                 <Input
@@ -48,13 +54,14 @@ export default function SessionsCreate(_props: Props) {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="minutes_file">
-                                    Minutes File (path)
+                                    Minutes file (optional, PDF/DOC/DOCX)
                                 </Label>
-                                <Input
+                                <input
                                     id="minutes_file"
                                     name="minutes_file"
-                                    placeholder="Optional"
-                                    autoComplete="off"
+                                    type="file"
+                                    accept=".pdf,.doc,.docx"
+                                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                 />
                                 <InputError message={errors.minutes_file} />
                             </div>

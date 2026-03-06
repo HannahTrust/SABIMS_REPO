@@ -16,7 +16,8 @@ type AttendanceRow = {
     user_id: number;
     user: { id: number; name: string } | null;
     status: string;
-    remarks: string | null;
+    reason: string | null;
+    remarks?: string | null;
 };
 
 type Session = {
@@ -78,7 +79,7 @@ export default function SessionsAttendance({
                                 <tr className="border-b border-sidebar-border/70 bg-muted/50 dark:border-sidebar-border">
                                     <th className="p-3 font-medium">Member</th>
                                     <th className="p-3 font-medium">Status</th>
-                                    <th className="p-3 font-medium">Remarks</th>
+                                    <th className="p-3 font-medium">Reason</th>
                                     {canUpdate && (
                                         <th className="p-3 font-medium">
                                             Action
@@ -120,8 +121,8 @@ export default function SessionsAttendance({
                                                         </select>
                                                         <input
                                                             type="text"
-                                                            name="remarks"
-                                                            defaultValue={a.remarks ?? ''}
+                                                            name="reason"
+                                                            defaultValue={a.reason ?? ''}
                                                             placeholder="Optional"
                                                             className="flex h-9 max-w-[200px] rounded-md border border-input bg-background px-2 py-1.5 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                                         />
@@ -141,7 +142,7 @@ export default function SessionsAttendance({
                                                     {a.status}
                                                 </td>
                                                 <td className="p-3 text-muted-foreground">
-                                                    {a.remarks ?? '—'}
+                                                    {a.reason ?? '—'}
                                                 </td>
                                                 <td className="p-3" />
                                             </>

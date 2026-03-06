@@ -21,7 +21,7 @@ class UpdateAttendanceRequest extends FormRequest
     {
         return [
             'status' => ['required', 'string', Rule::in(Attendance::statuses())],
-            'remarks' => ['nullable', 'string', 'max:1000'],
+            'reason' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
