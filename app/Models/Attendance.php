@@ -14,7 +14,17 @@ class Attendance extends Model
         'status',
         'reason',
         'remarks',
+        'time_scanned',
+        'marked_by',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'time_scanned' => 'datetime',
+        ];
+    }
 
     public const STATUS_PRESENT = 'present';
     public const STATUS_ABSENT = 'absent';

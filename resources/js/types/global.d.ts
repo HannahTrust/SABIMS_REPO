@@ -5,6 +5,13 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            notifications: Array<{
+                id: string;
+                type: string;
+                data: Record<string, unknown>;
+                read_at: string | null;
+                created_at: string;
+            }>;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

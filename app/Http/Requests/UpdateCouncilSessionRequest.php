@@ -12,13 +12,22 @@ class UpdateCouncilSessionRequest extends FormRequest
         return $user && $user->role === 'secretary';
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->committee_id === '') {
+            $this->merge(['committee_id' => null]);
+        }
+    }
+
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
+            'session_title' => ['required', 'string', 'max:255'],
             'session_date' => ['required', 'date'],
+            'committee_id' => ['nullable', 'integer', 'exists:committees,id'],
             'agenda' => ['nullable', 'string', 'max:65535'],
             'minutes_type' => ['required', 'in:upload,text'],
             'minutes_file' => ['nullable', 'file', 'mimes:pdf,doc,docx'],

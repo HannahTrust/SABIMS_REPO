@@ -9,9 +9,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 type Session = {
     id: number;
+    session_title: string | null;
     session_date: string;
-    agenda: string | null;
-    minutes_file: string | null;
+    committee: { id: number; name: string } | null;
     created_by: { id: number; name: string } | null;
 };
 
@@ -49,7 +49,9 @@ export default function SessionsIndex({ sessions, canCreate }: Props) {
                         <table className="w-full text-left text-sm">
                             <thead>
                                 <tr className="border-b border-sidebar-border/70 bg-muted/50 dark:border-sidebar-border">
+                                    <th className="p-3 font-medium">Title</th>
                                     <th className="p-3 font-medium">Date</th>
+                                    <th className="p-3 font-medium">Committee</th>
                                     <th className="p-3 font-medium">Created by</th>
                                     <th className="p-3 font-medium">Actions</th>
                                 </tr>
@@ -60,10 +62,16 @@ export default function SessionsIndex({ sessions, canCreate }: Props) {
                                         key={session.id}
                                         className="border-b border-sidebar-border/70 last:border-b-0 dark:border-sidebar-border"
                                     >
+                                        <td className="p-3 font-medium">
+                                            {session.session_title ?? new Date(session.session_date).toLocaleDateString()}
+                                        </td>
                                         <td className="p-3">
                                             {new Date(
                                                 session.session_date,
                                             ).toLocaleDateString()}
+                                        </td>
+                                        <td className="p-3 text-muted-foreground">
+                                            {session.committee?.name ?? 'All SB Members'}
                                         </td>
                                         <td className="p-3 text-muted-foreground">
                                             {session.created_by?.name ?? '—'}

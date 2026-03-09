@@ -13,6 +13,105 @@ use Inertia\Response;
 class AttendanceController extends Controller
 {
     /**
+     * Open attendance for QR scanning. Secretary only.
+     */
+    public function openAttendance(Request $request, CouncilSession $session): RedirectResponse
+    {
+        if (! $request->user()?->hasRole('secretary')) {
+            abort(403);
+        }
+
+        $session->update(['attendance_status' => CouncilSession::ATTENDANCE_OPEN]);
+
+        return redirect()->back()->with('status', 'Attendance is now open. Members can scan the QR code.');
+    }
+
+    /**
+     * Close attendance for QR scanning. Secretary only.
+     */
+    public function closeAttendance(Request $request, CouncilSession $session): RedirectResponse
+    {
+        if (! $request->user()?->hasRole('secretary')) {
+            abort(403);
+        }
+
+        $session->update(['attendance_status' => CouncilSession::ATTENDANCE_CLOSED]);
+
+        return redirect()->back()->with('status', 'Attendance is now closed.');
+    }
+
+    /**
+     * Handle QR scan: verify session/token, check open, record presence. Auth required.
+     */
+    public function scan(Request $request, int $sessionId, string $token): Response|RedirectResponse
+    {
+        $user = $request->user();
+
+        $session = CouncilSession::query()
+            ->where('id', $sessionId)
+            ->where('qr_token', $token)
+            ->first();
+
+        if (! $session) {
+            return Inertia::render('Attendance/ScanResult', [
+                'success' => false,
+                'message' => 'Invalid or expired session link.',
+            ]);
+        }
+
+        if ($session->attendance_status !== CouncilSession::ATTENDANCE_OPEN) {
+            return Inertia::render('Attendance/ScanResult', [
+                'success' => false,
+                'message' => 'Attendance is currently closed. Please wait for the Secretary to open attendance.',
+                'session_title' => $session->session_title,
+            ]);
+        }
+
+        $expectedIds = $session->getExpectedMemberIds();
+        if (! $expectedIds->contains($user->id)) {
+            return Inertia::render('Attendance/ScanResult', [
+                'success' => false,
+                'message' => 'You are not assigned to this session.',
+                'session_title' => $session->session_title,
+            ]);
+        }
+
+        $attendance = Attendance::query()
+            ->where('session_id', $session->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $attendance) {
+            return Inertia::render('Attendance/ScanResult', [
+                'success' => false,
+                'message' => 'You are not in the expected attendance list for this session.',
+                'session_title' => $session->session_title,
+            ]);
+        }
+
+        if ($attendance->status === Attendance::STATUS_PRESENT) {
+            return Inertia::render('Attendance/ScanResult', [
+                'success' => true,
+                'already_recorded' => true,
+                'message' => 'You have already been marked present for this session.',
+                'session_title' => $session->session_title,
+            ]);
+        }
+
+        $attendance->update([
+            'status' => Attendance::STATUS_PRESENT,
+            'time_scanned' => now(),
+            'marked_by' => null,
+        ]);
+
+        return Inertia::render('Attendance/ScanResult', [
+            'success' => true,
+            'already_recorded' => false,
+            'message' => 'Attendance recorded successfully. You are marked present.',
+            'session_title' => $session->session_title,
+        ]);
+    }
+    /**
      * List attendance for a session. Viewable by vice_mayor, sb_member, admin.
      */
     public function index(Request $request, CouncilSession $session): Response|RedirectResponse

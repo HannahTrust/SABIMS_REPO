@@ -34,13 +34,21 @@ class EnsureRole
             abort(401);
         }
 
-        $userRole = User::normalizeRole($user->role);
-        $allowed = array_merge(
+        $userRole = User::normalizeRole($user->role ?? '');
+        $rawAllowed = array_merge(
             $this->roles,
             array_filter(array_map('trim', explode(',', $roles)))
         );
-        $allowed = array_map(fn (string $r): ?string => User::normalizeRole($r), $allowed);
-        if ($allowed !== [] && ! in_array($userRole, $allowed, true)) {
+        $allowed = array_values(array_filter(array_map(
+            function ($r) {
+                $n = User::normalizeRole(is_string($r) ? $r : '');
+
+                return $n !== null && $n !== '' ? $n : null;
+            },
+            $rawAllowed
+        )));
+
+        if ($allowed !== [] && ($userRole === null || $userRole === '' || ! in_array($userRole, $allowed, true))) {
             abort(403);
         }
 

@@ -1,5 +1,6 @@
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ type Attendance = {
     user: { id: number; name: string } | null;
     status: string;
     reason: string | null;
+    time_scanned?: string | null;
 };
 
 type Resolution = {
@@ -37,17 +39,29 @@ type Resolution = {
 
 type Session = {
     id: number;
+    session_title: string | null;
     session_date: string;
+    committee: { id: number; name: string } | null;
+    attendance_status: string;
+    scan_url: string | null;
     agenda: string | null;
+    minutes_type: 'upload' | 'text';
     minutes_file: string | null;
+    minutes_file_url: string | null;
+    minutes_content: string | null;
     created_by: { id: number; name: string } | null;
     attendances: Attendance[];
+    total_expected?: number;
+    present_count?: number;
+    absent_count?: number;
     resolutions: Resolution[];
 };
 
 type Props = {
     session: Session;
     canEdit: boolean;
+    showQrCode?: boolean;
+    isAssignedToSession?: boolean;
 };
 
 function formatStatusWithReason(status: string, reason: string | null): string {
@@ -57,7 +71,12 @@ function formatStatusWithReason(status: string, reason: string | null): string {
     return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-export default function SessionsShow({ session, canEdit }: Props) {
+export default function SessionsShow({
+    session,
+    canEdit,
+    showQrCode = false,
+    isAssignedToSession = false,
+}: Props) {
     const { flash } = usePage().props as { flash?: { status?: string } };
     const [selectedAttendance, setSelectedAttendance] =
         useState<Attendance | null>(null);
@@ -87,17 +106,39 @@ export default function SessionsShow({ session, canEdit }: Props) {
         );
     };
 
-    const totalMembers = session.attendances.length;
-    const presentCount = session.attendances.filter(
-        (a) => a.status === 'present',
-    ).length;
+    const totalMembers =
+        session.total_expected ?? session.attendances.length;
+    const presentCount =
+        session.present_count ??
+        session.attendances.filter((a) => a.status === 'present').length;
+    const absentCount =
+        session.absent_count ??
+        session.attendances.filter((a) => a.status === 'absent').length;
     const hasQuorum =
         totalMembers > 0 && presentCount > Math.floor(totalMembers / 2);
+    const isAttendanceOpen = session.attendance_status === 'open';
+
+    const handleOpenAttendance = () => {
+        router.post(
+            `/sessions/${session.id}/attendance/open`,
+            {},
+            { preserveScroll: true },
+        );
+    };
+    const handleCloseAttendance = () => {
+        router.post(
+            `/sessions/${session.id}/attendance/close`,
+            {},
+            { preserveScroll: true },
+        );
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Sessions', href: '/sessions' },
         {
-            title: new Date(session.session_date).toLocaleDateString(),
+            title:
+                session.session_title ||
+                new Date(session.session_date).toLocaleDateString(),
             href: `/sessions/${session.id}`,
         },
     ];
@@ -116,34 +157,97 @@ export default function SessionsShow({ session, canEdit }: Props) {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">
-                            Session —{' '}
+                            {session.session_title ||
+                                `Session — ${new Date(session.session_date).toLocaleDateString()}`}
+                        </h1>
+                        <p className="mt-1 text-muted-foreground text-sm">
                             {new Date(
                                 session.session_date,
                             ).toLocaleDateString()}
-                        </h1>
+                            {session.committee &&
+                                ` · ${session.committee.name}`}
+                        </p>
                         {session.created_by && (
-                            <p className="mt-1 text-muted-foreground text-sm">
+                            <p className="text-muted-foreground text-sm">
                                 Created by {session.created_by.name}
                             </p>
                         )}
+                        <div className="mt-2 flex items-center gap-2">
+                            <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isAttendanceOpen ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-muted text-muted-foreground'}`}
+                            >
+                                Attendance{' '}
+                                {session.attendance_status === 'open'
+                                    ? 'Open'
+                                    : 'Closed'}
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        {canEdit && (
+                            <>
+                                {isAttendanceOpen ? (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleCloseAttendance}
+                                    >
+                                        Close Attendance
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={handleOpenAttendance}
+                                    >
+                                        Open Attendance
+                                    </Button>
+                                )}
+                            </>
+                        )}
                         <Button asChild variant="outline" size="sm">
                             <Link href={`/sessions/${session.id}/attendance`}>
                                 View Attendance
                             </Link>
                         </Button>
                         {canEdit && (
-                            <>
-                                <Button asChild variant="outline" size="sm">
-                                    <Link href={`/sessions/${session.id}/edit`}>
-                                        Edit Session
-                                    </Link>
-                                </Button>
-                            </>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/sessions/${session.id}/edit`}>
+                                    Edit Session
+                                </Link>
+                            </Button>
                         )}
                     </div>
                 </div>
+
+                {isAssignedToSession && (
+                    <section className="rounded-lg border border-sidebar-border/70 bg-muted/30 p-4 dark:border-sidebar-border">
+                        <h2 className="mb-2 text-sm font-medium">
+                            Attendance — Scan to Mark Present
+                        </h2>
+                        {showQrCode && session.scan_url ? (
+                            <>
+                                <p className="mb-3 text-muted-foreground text-sm">
+                                    Scan this QR code to mark your attendance.
+                                </p>
+                                <div className="inline-flex rounded-lg border border-white bg-white p-3 dark:border-sidebar-border dark:bg-background">
+                                    <QRCodeSVG
+                                        value={session.scan_url}
+                                        size={200}
+                                        level="M"
+                                        includeMargin
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-muted-foreground text-sm">
+                                Attendance is currently closed. The Secretary
+                                will open it when the session starts.
+                            </p>
+                        )}
+                    </section>
+                )}
 
                 {session.agenda && (
                     <section>
@@ -156,11 +260,40 @@ export default function SessionsShow({ session, canEdit }: Props) {
                     </section>
                 )}
 
+                {(session.minutes_type === 'upload' && session.minutes_file_url) ||
+                (session.minutes_type === 'text' && session.minutes_content) ? (
+                    <section>
+                        <h2 className="mb-2 text-sm font-medium">
+                            Minutes of the Meeting
+                        </h2>
+                        {session.minutes_type === 'upload' &&
+                        session.minutes_file_url ? (
+                            <div className="rounded-lg border border-sidebar-border/70 bg-muted/30 p-3 dark:border-sidebar-border">
+                                <a
+                                    href={session.minutes_file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary underline hover:no-underline"
+                                >
+                                    Download Minutes File
+                                </a>
+                            </div>
+                        ) : (
+                            <div className="whitespace-pre-wrap rounded-lg border border-sidebar-border/70 bg-muted/30 p-3 text-sm dark:border-sidebar-border">
+                                {session.minutes_content}
+                            </div>
+                        )}
+                    </section>
+                ) : null}
+
                 <section>
-                    <h2 className="mb-2 text-sm font-medium">Attendance</h2>
+                    <h2 className="mb-2 text-sm font-medium">
+                        Attendance Dashboard
+                    </h2>
                     {totalMembers > 0 && (
                         <p className="mb-2 text-muted-foreground text-sm">
-                            Members Present: {presentCount} / {totalMembers}
+                            Total expected: {totalMembers} · Present:{' '}
+                            {presentCount} · Absent: {absentCount}
                             {' · '}
                             <span
                                 className={

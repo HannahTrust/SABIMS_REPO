@@ -20,7 +20,7 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Committees: admin + secretary full CRUD; others read via index/show
+    // Committees: any authenticated user can view index/show; only admin/secretary can create/edit/delete
     Route::get('committees', [CommitteeController::class, 'index'])->name('committees.index');
     Route::get('committees/create', [CommitteeController::class, 'create'])->middleware('role:admin,secretary')->name('committees.create');
     Route::post('committees', [CommitteeController::class, 'store'])->middleware('role:admin,secretary')->name('committees.store');
@@ -31,21 +31,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('committees/{committee}/manage-members', [CommitteeController::class, 'manageMembers'])->middleware('role:admin,secretary,vice_mayor')->name('committees.manage-members');
     Route::put('committees/{committee}/manage-members', [CommitteeController::class, 'updateMembers'])->middleware('role:admin,secretary')->name('committees.manage-members.update');
 
-    // Sessions: secretary CRUD; vice_mayor + sb_member read-only
-    Route::get('sessions', [CouncilSessionController::class, 'index'])->middleware('role:secretary,vice_mayor,sb_member,admin')->name('sessions.index');
+    // Sessions: any authenticated user can view index/show/attendance; only secretary can create/edit/delete
+    Route::get('sessions', [CouncilSessionController::class, 'index'])->name('sessions.index');
     Route::get('sessions/create', [CouncilSessionController::class, 'create'])->middleware('role:secretary')->name('sessions.create');
     Route::post('sessions', [CouncilSessionController::class, 'store'])->middleware('role:secretary')->name('sessions.store');
-    Route::get('sessions/{session}', [CouncilSessionController::class, 'show'])->middleware('role:secretary,vice_mayor,sb_member,admin')->name('sessions.show');
+    Route::get('sessions/{session}', [CouncilSessionController::class, 'show'])->name('sessions.show');
     Route::get('sessions/{session}/edit', [CouncilSessionController::class, 'edit'])->middleware('role:secretary')->name('sessions.edit');
     Route::put('sessions/{session}', [CouncilSessionController::class, 'update'])->middleware('role:secretary')->name('sessions.update');
     Route::delete('sessions/{session}', [CouncilSessionController::class, 'destroy'])->middleware('role:secretary')->name('sessions.destroy');
 
-    // Attendance: view by vice_mayor, sb_member, admin, secretary; update by secretary only
-    Route::get('sessions/{session}/attendance', [AttendanceController::class, 'index'])->middleware('role:secretary,vice_mayor,sb_member,admin')->name('sessions.attendance.index');
+    // Attendance: any authenticated user can view; only secretary can update/open/close
+    Route::get('sessions/{session}/attendance', [AttendanceController::class, 'index'])->name('sessions.attendance.index');
     Route::post('attendance/{attendance}', [AttendanceController::class, 'update'])->middleware('role:secretary')->name('attendance.update');
+    Route::post('sessions/{session}/attendance/open', [AttendanceController::class, 'openAttendance'])->middleware('role:secretary')->name('sessions.attendance.open');
+    Route::post('sessions/{session}/attendance/close', [AttendanceController::class, 'closeAttendance'])->middleware('role:secretary')->name('sessions.attendance.close');
 
-    // Resolutions: secretary CRUD; vice_mayor + sb_member read-only (sb_member filtered by committees in controller)
-    Route::get('resolutions', [ResolutionController::class, 'index'])->middleware('role:secretary,vice_mayor,sb_member,admin')->name('resolutions.index');
+    // QR scan: any authenticated user (SB members scan to mark attendance)
+    Route::get('attendance/scan/{sessionId}/{token}', [AttendanceController::class, 'scan'])->name('attendance.scan');
+
+    // Resolutions: any authenticated user can view index/show (controller filters by committee for sb_member); only secretary can create/edit/delete
+    Route::get('resolutions', [ResolutionController::class, 'index'])->name('resolutions.index');
     Route::get('resolutions/create', [ResolutionController::class, 'create'])->middleware('role:secretary')->name('resolutions.create');
     Route::post('resolutions', [ResolutionController::class, 'store'])->middleware('role:secretary')->name('resolutions.store');
     Route::get('resolutions/{resolution}', [ResolutionController::class, 'show'])->name('resolutions.show');

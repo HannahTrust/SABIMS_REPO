@@ -54,13 +54,23 @@ class User extends Authenticatable
     }
 
     /**
-     * Normalize role for comparison (e.g. system_admin -> admin).
+     * Normalize role for comparison (handles variants like "SB Member" -> sb_member).
      */
     public static function normalizeRole(?string $role): ?string
     {
-        return match ($role) {
+        if ($role === null || $role === '') {
+            return null;
+        }
+
+        $normalized = strtolower(str_replace([' ', '-'], '_', trim($role)));
+
+        return match ($normalized) {
             'system_admin' => 'admin',
-            default => $role,
+            'sb_member', 'sbmember' => 'sb_member',
+            'vice_mayor', 'vicemayor' => 'vice_mayor',
+            'secretary' => 'secretary',
+            'admin' => 'admin',
+            default => $normalized,
         };
     }
 
@@ -70,8 +80,12 @@ class User extends Authenticatable
     public function hasRole(string ...$roles): bool
     {
         $normalized = self::normalizeRole($this->role);
+        if ($normalized === null || $normalized === '') {
+            return false;
+        }
+        $allowed = array_filter(array_map(fn (string $r) => self::normalizeRole($r), $roles));
 
-        return $normalized !== null && in_array($normalized, $roles, true);
+        return in_array($normalized, $allowed, true);
     }
 
     /**

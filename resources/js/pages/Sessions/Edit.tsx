@@ -6,22 +6,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+type Committee = { id: number; name: string };
+
 type Session = {
     id: number;
+    session_title: string | null;
     session_date: string;
+    committee_id: number | null;
     agenda: string | null;
     minutes_file: string | null;
 };
 
 type Props = {
     session: Session;
+    committees: Committee[];
 };
 
-export default function SessionsEdit({ session }: Props) {
+export default function SessionsEdit({ session, committees }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Sessions', href: '/sessions' },
         {
-            title: new Date(session.session_date).toLocaleDateString(),
+            title:
+                session.session_title ||
+                new Date(session.session_date).toLocaleDateString(),
             href: `/sessions/${session.id}`,
         },
         { title: 'Edit', href: `/sessions/${session.id}/edit` },
@@ -39,6 +46,29 @@ export default function SessionsEdit({ session }: Props) {
                 >
                     {({ processing, errors }) => (
                         <>
+                            <input
+                                type="hidden"
+                                name="minutes_type"
+                                value="upload"
+                            />
+                            <input
+                                type="hidden"
+                                name="minutes_content"
+                                value=""
+                            />
+                            <div className="grid gap-2">
+                                <Label htmlFor="session_title">
+                                    Session Title
+                                </Label>
+                                <Input
+                                    id="session_title"
+                                    name="session_title"
+                                    type="text"
+                                    required
+                                    defaultValue={session.session_title ?? ''}
+                                />
+                                <InputError message={errors.session_title} />
+                            </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="session_date">Session Date</Label>
                                 <Input
@@ -49,6 +79,29 @@ export default function SessionsEdit({ session }: Props) {
                                     defaultValue={session.session_date}
                                 />
                                 <InputError message={errors.session_date} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="committee_id">
+                                    Committee (optional)
+                                </Label>
+                                <select
+                                    id="committee_id"
+                                    name="committee_id"
+                                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    defaultValue={
+                                        session.committee_id ?? ''
+                                    }
+                                >
+                                    <option value="">
+                                        All SB Members
+                                    </option>
+                                    {committees.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.committee_id} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="agenda">Agenda</Label>
