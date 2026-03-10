@@ -66,15 +66,23 @@ class CouncilSession extends Model
 
     /**
      * Get user IDs expected for this session (committee members or all SB members).
+     * For committee sessions, includes both committee_user members and the committee chair (chair_id).
      *
      * @return \Illuminate\Support\Collection<int, int>
      */
     public function getExpectedMemberIds(): \Illuminate\Support\Collection
     {
         if ($this->committee_id) {
-            return \Illuminate\Support\Facades\DB::table('committee_user')
+            $memberIds = \Illuminate\Support\Facades\DB::table('committee_user')
                 ->where('committee_id', $this->committee_id)
                 ->pluck('user_id');
+
+            $committee = $this->committee;
+            if ($committee && $committee->chair_id && ! $memberIds->contains($committee->chair_id)) {
+                $memberIds = $memberIds->push($committee->chair_id)->unique()->values();
+            }
+
+            return $memberIds;
         }
 
         return User::query()

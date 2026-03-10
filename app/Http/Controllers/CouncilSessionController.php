@@ -25,15 +25,24 @@ class CouncilSessionController extends Controller
             ->with(['createdBy:id,name', 'committee:id,name'])
             ->orderByDesc('session_date');
 
-        // SB members only see sessions they are expected to attend
+        // SB members should only see sessions where they are actually included/expected.
+        // We consider a session as "kasali siya" if:
+        // - may attendance record siya sa session, OR
+        // - yung session ay para sa committee kung saan member/chair siya, OR
+        // - general session for all SB members (walang committee_id).
         if ($normalizedRole === 'sb_member') {
             $userCommitteeIds = $user->committees()->pluck('committees.id');
+
             $query->where(function ($q) use ($user, $userCommitteeIds) {
-                $q->whereNull('committee_id') // All SB Members
-                    ->orWhereIn('committee_id', $userCommitteeIds);
+                $q->whereHas('attendances', function ($qa) use ($user) {
+                    $qa->where('user_id', $user->id);
+                })->orWhere(function ($qb) use ($userCommitteeIds) {
+                    $qb->whereNull('committee_id')
+                        ->orWhereIn('committee_id', $userCommitteeIds);
+                });
             });
         }
-        // Secretary and admin see all sessions (no extra filter)
+        // Secretary, admin, etc. see all sessions (no extra filter)
 
         $sessions = $query->get();
         $canCreate = $user && $normalizedRole === 'secretary';

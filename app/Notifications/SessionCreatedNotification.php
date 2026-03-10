@@ -4,10 +4,9 @@ namespace App\Notifications;
 
 use App\Models\CouncilSession;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class SessionCreatedNotification extends Notification implements ShouldQueue
+class SessionCreatedNotification extends Notification
 {
     use Queueable;
 

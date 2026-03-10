@@ -47,7 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('sessions/{session}/attendance/close', [AttendanceController::class, 'closeAttendance'])->middleware('role:secretary')->name('sessions.attendance.close');
 
     // QR scan: any authenticated user (SB members scan to mark attendance)
-    Route::get('attendance/scan/{sessionId}/{token}', [AttendanceController::class, 'scan'])->name('attendance.scan');
+    Route::get('attendance/scan/{session}/{token}', [AttendanceController::class, 'scan'])->name('attendance.scan');
 
     // Resolutions: any authenticated user can view index/show (controller filters by committee for sb_member); only secretary can create/edit/delete
     Route::get('resolutions', [ResolutionController::class, 'index'])->name('resolutions.index');

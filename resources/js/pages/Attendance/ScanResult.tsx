@@ -8,6 +8,8 @@ type Props = {
     message: string;
     session_title?: string;
     already_recorded?: boolean;
+    session_date?: string;
+    time_scanned?: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -20,6 +22,8 @@ export default function AttendanceScanResult({
     message,
     session_title,
     already_recorded,
+    session_date,
+    time_scanned,
 }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -72,6 +76,16 @@ export default function AttendanceScanResult({
                     {session_title && (
                         <p className="text-sm font-medium text-muted-foreground">
                             Session: {session_title}
+                        </p>
+                    )}
+                    {session_date && (
+                        <p className="text-xs text-muted-foreground">
+                            Session date: {session_date}
+                        </p>
+                    )}
+                    {time_scanned && (
+                        <p className="text-xs text-muted-foreground">
+                            Time scanned: {time_scanned}
                         </p>
                     )}
                 </div>

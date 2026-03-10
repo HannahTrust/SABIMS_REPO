@@ -41,39 +41,49 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Handle QR scan: verify session/token, check open, record presence. Auth required.
+     * Handle QR scan: verify session/token, check open, validate member, record presence.
      */
-    public function scan(Request $request, int $sessionId, string $token): Response|RedirectResponse
+    public function scan(Request $request, CouncilSession $session, string $token): Response|RedirectResponse
     {
         $user = $request->user();
 
-        $session = CouncilSession::query()
-            ->where('id', $sessionId)
-            ->where('qr_token', $token)
-            ->first();
+        if (! $user) {
+            abort(401);
+        }
 
-        if (! $session) {
+        if ($session->qr_token !== $token) {
             return Inertia::render('Attendance/ScanResult', [
                 'success' => false,
                 'message' => 'Invalid or expired session link.',
             ]);
         }
 
-        if ($session->attendance_status !== CouncilSession::ATTENDANCE_OPEN) {
+        if (! $session->isAttendanceOpen()) {
             return Inertia::render('Attendance/ScanResult', [
                 'success' => false,
-                'message' => 'Attendance is currently closed. Please wait for the Secretary to open attendance.',
+                'message' => 'Attendance is currently closed.',
                 'session_title' => $session->session_title,
+                'session_date' => $session->session_date->toDateString(),
             ]);
+        }
+
+        if (! $user->hasRole('sb_member')) {
+            return Inertia::render('Attendance/ScanResult', [
+                'success' => false,
+                'message' => 'You are not allowed to mark attendance for this session.',
+                'session_title' => $session->session_title,
+                'session_date' => $session->session_date->toDateString(),
+            ])->toResponse($request)->setStatusCode(403);
         }
 
         $expectedIds = $session->getExpectedMemberIds();
         if (! $expectedIds->contains($user->id)) {
             return Inertia::render('Attendance/ScanResult', [
                 'success' => false,
-                'message' => 'You are not assigned to this session.',
+                'message' => 'You are not allowed to mark attendance for this session.',
                 'session_title' => $session->session_title,
-            ]);
+                'session_date' => $session->session_date->toDateString(),
+            ])->toResponse($request)->setStatusCode(403);
         }
 
         $attendance = Attendance::query()
@@ -86,6 +96,7 @@ class AttendanceController extends Controller
                 'success' => false,
                 'message' => 'You are not in the expected attendance list for this session.',
                 'session_title' => $session->session_title,
+                'session_date' => $session->session_date->toDateString(),
             ]);
         }
 
@@ -93,8 +104,10 @@ class AttendanceController extends Controller
             return Inertia::render('Attendance/ScanResult', [
                 'success' => true,
                 'already_recorded' => true,
-                'message' => 'You have already been marked present for this session.',
+                'message' => 'You have already marked your attendance.',
                 'session_title' => $session->session_title,
+                'session_date' => $session->session_date->toDateString(),
+                'time_scanned' => optional($attendance->time_scanned)->toDateTimeString(),
             ]);
         }
 
@@ -104,11 +117,15 @@ class AttendanceController extends Controller
             'marked_by' => null,
         ]);
 
+        $attendance->refresh();
+
         return Inertia::render('Attendance/ScanResult', [
             'success' => true,
             'already_recorded' => false,
-            'message' => 'Attendance recorded successfully. You are marked present.',
+            'message' => 'Attendance successfully recorded.',
             'session_title' => $session->session_title,
+            'session_date' => $session->session_date->toDateString(),
+            'time_scanned' => optional($attendance->time_scanned)->toDateTimeString(),
         ]);
     }
     /**
