@@ -92,11 +92,10 @@ class AttendanceController extends Controller
             ->first();
 
         if (! $attendance) {
-            return Inertia::render('Attendance/ScanResult', [
-                'success' => false,
-                'message' => 'You are not in the expected attendance list for this session.',
-                'session_title' => $session->session_title,
-                'session_date' => $session->session_date->toDateString(),
+            $attendance = Attendance::create([
+                'session_id' => $session->id,
+                'user_id' => $user->id,
+                'status' => Attendance::STATUS_ABSENT,
             ]);
         }
 

@@ -7,18 +7,44 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+    Calendar,
+    Users,
+    FileText,
+    QrCode,
+    CheckCircle,
+    XCircle,
+    Clock,
+    AlertCircle,
+    Edit3,
+    ChevronLeft,
+    UserPlus,
+    Download,
+    Copy,
+    Check,
+    Eye,
+    User,
+    BookOpen,
+    Camera,
+    Smartphone,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import AttendanceController from '@/actions/App/Http/Controllers/AttendanceController';
 
 const STATUS_OPTIONS = [
-    { value: 'present', label: 'Present' },
-    { value: 'absent', label: 'Absent' },
-    { value: 'late', label: 'Late' },
-    { value: 'excused', label: 'Excused' },
+    { value: 'present', label: 'Present', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+    { value: 'absent', label: 'Absent', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
+    { value: 'late', label: 'Late', icon: Clock, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
+    { value: 'excused', label: 'Excused', icon: AlertCircle, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
 ] as const;
 
 type Attendance = {
@@ -78,11 +104,13 @@ export default function SessionsShow({
     isAssignedToSession = false,
 }: Props) {
     const { flash } = usePage().props as { flash?: { status?: string } };
-    const [selectedAttendance, setSelectedAttendance] =
-        useState<Attendance | null>(null);
+    const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
     const [modalStatus, setModalStatus] = useState('');
     const [modalReason, setModalReason] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState('overview');
+    const [qrCopied, setQrCopied] = useState(false);
+    const [showQrFull, setShowQrFull] = useState(false);
 
     const openModal = (a: Attendance) => {
         setSelectedAttendance(a);
@@ -106,17 +134,16 @@ export default function SessionsShow({
         );
     };
 
-    const totalMembers =
-        session.total_expected ?? session.attendances.length;
-    const presentCount =
-        session.present_count ??
+    const totalMembers = session.total_expected ?? session.attendances.length;
+    const presentCount = session.present_count ??
         session.attendances.filter((a) => a.status === 'present').length;
-    const absentCount =
-        session.absent_count ??
+    const absentCount = session.absent_count ??
         session.attendances.filter((a) => a.status === 'absent').length;
-    const hasQuorum =
-        totalMembers > 0 && presentCount > Math.floor(totalMembers / 2);
+    const lateCount = session.attendances.filter((a) => a.status === 'late').length;
+    const excusedCount = session.attendances.filter((a) => a.status === 'excused').length;
+    const hasQuorum = totalMembers > 0 && presentCount > Math.floor(totalMembers / 2);
     const isAttendanceOpen = session.attendance_status === 'open';
+    const attendancePercentage = totalMembers > 0 ? Math.round((presentCount / totalMembers) * 100) : 0;
 
     const handleOpenAttendance = () => {
         router.post(
@@ -125,6 +152,7 @@ export default function SessionsShow({
             { preserveScroll: true },
         );
     };
+    
     const handleCloseAttendance = () => {
         router.post(
             `/sessions/${session.id}/attendance/close`,
@@ -133,362 +161,632 @@ export default function SessionsShow({
         );
     };
 
+    const copyQrUrl = () => {
+        if (session.scan_url) {
+            navigator.clipboard.writeText(session.scan_url);
+            setQrCopied(true);
+            setTimeout(() => setQrCopied(false), 2000);
+        }
+    };
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Sessions', href: '/sessions' },
         {
-            title:
-                session.session_title ||
+            title: session.session_title ||
                 new Date(session.session_date).toLocaleDateString(),
             href: `/sessions/${session.id}`,
         },
     ];
 
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
+    const getStatusIcon = (status: string) => {
+        const config = STATUS_OPTIONS.find(opt => opt.value === status);
+        if (!config) return null;
+        const Icon = config.icon;
+        return <Icon className={cn("h-4 w-4", config.color)} />;
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head
-                title={`Session ${new Date(session.session_date).toLocaleDateString()}`}
-            />
-            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4">
+            <Head title={`Session — ${new Date(session.session_date).toLocaleDateString()}`} />
+            
+            <div className="flex-1 space-y-6 p-6 md:p-8">
+                {/* Flash Message */}
                 {flash?.status && (
-                    <p className="rounded-lg bg-green-50 p-3 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-200">
-                        {flash.status}
-                    </p>
-                )}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">
-                            {session.session_title ||
-                                `Session — ${new Date(session.session_date).toLocaleDateString()}`}
-                        </h1>
-                        <p className="mt-1 text-muted-foreground text-sm">
-                            {new Date(
-                                session.session_date,
-                            ).toLocaleDateString()}
-                            {session.committee &&
-                                ` · ${session.committee.name}`}
-                        </p>
-                        {session.created_by && (
-                            <p className="text-muted-foreground text-sm">
-                                Created by {session.created_by.name}
-                            </p>
-                        )}
-                        <div className="mt-2 flex items-center gap-2">
-                            <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isAttendanceOpen ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-muted text-muted-foreground'}`}
-                            >
-                                Attendance{' '}
-                                {session.attendance_status === 'open'
-                                    ? 'Open'
-                                    : 'Closed'}
-                            </span>
+                    <div className="animate-in slide-in-from-top-2 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-800/30 dark:bg-green-900/20 dark:text-green-200">
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                            {flash.status}
                         </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                )}
+
+                {/* Header with Back Button */}
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+                        <Link href="/sessions">
+                            <ChevronLeft className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>Session Details</span>
+                        </div>
+                        <h1 className="text-2xl font-semibold tracking-tight mt-1">
+                            {session.session_title || 'Untitled Session'}
+                        </h1>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
                         {canEdit && (
                             <>
                                 {isAttendanceOpen ? (
                                     <Button
-                                        type="button"
                                         variant="outline"
-                                        size="sm"
                                         onClick={handleCloseAttendance}
+                                        className="gap-2"
                                     >
+                                        <XCircle className="h-4 w-4" />
                                         Close Attendance
                                     </Button>
                                 ) : (
                                     <Button
-                                        type="button"
-                                        size="sm"
                                         onClick={handleOpenAttendance}
+                                        className="gap-2"
                                     >
+                                        <UserPlus className="h-4 w-4" />
                                         Open Attendance
                                     </Button>
                                 )}
                             </>
                         )}
-                        <Button asChild variant="outline" size="sm">
+                        <Button asChild variant="outline" className="gap-2">
                             <Link href={`/sessions/${session.id}/attendance`}>
-                                View Attendance
+                                <Users className="h-4 w-4" />
+                                Attendance List
                             </Link>
                         </Button>
                         {canEdit && (
-                            <Button asChild variant="outline" size="sm">
+                            <Button asChild variant="outline" size="icon">
                                 <Link href={`/sessions/${session.id}/edit`}>
-                                    Edit Session
+                                    <Edit3 className="h-4 w-4" />
                                 </Link>
                             </Button>
                         )}
                     </div>
                 </div>
 
-                {isAssignedToSession && (
-                    <section className="rounded-lg border border-sidebar-border/70 bg-muted/30 p-4 dark:border-sidebar-border">
-                        <h2 className="mb-2 text-sm font-medium">
-                            Attendance — Scan to Mark Present
-                        </h2>
-                        {showQrCode && session.scan_url ? (
-                            <>
-                                <p className="mb-3 text-muted-foreground text-sm">
-                                    Scan this QR code to mark your attendance.
-                                </p>
-                                <div className="inline-flex rounded-lg border border-white bg-white p-3 dark:border-sidebar-border dark:bg-background">
-                                    <QRCodeSVG
-                                        value={session.scan_url}
-                                        size={200}
-                                        level="M"
-                                        includeMargin
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <p className="text-muted-foreground text-sm">
-                                Attendance is currently closed. The Secretary
-                                will open it when the session starts.
-                            </p>
-                        )}
-                    </section>
-                )}
-
-                {session.agenda && (
-                    <section>
-                        <h2 className="mb-2 text-sm font-medium">
-                            Agenda
-                        </h2>
-                        <p className="whitespace-pre-wrap rounded-lg border border-sidebar-border/70 bg-muted/30 p-3 text-sm dark:border-sidebar-border">
-                            {session.agenda}
-                        </p>
-                    </section>
-                )}
-
-                {(session.minutes_type === 'upload' && session.minutes_file_url) ||
-                (session.minutes_type === 'text' && session.minutes_content) ? (
-                    <section>
-                        <h2 className="mb-2 text-sm font-medium">
-                            Minutes of the Meeting
-                        </h2>
-                        {session.minutes_type === 'upload' &&
-                        session.minutes_file_url ? (
-                            <div className="rounded-lg border border-sidebar-border/70 bg-muted/30 p-3 dark:border-sidebar-border">
-                                <a
-                                    href={session.minutes_file_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary underline hover:no-underline"
-                                >
-                                    Download Minutes File
-                                </a>
-                            </div>
-                        ) : (
-                            <div className="whitespace-pre-wrap rounded-lg border border-sidebar-border/70 bg-muted/30 p-3 text-sm dark:border-sidebar-border">
-                                {session.minutes_content}
-                            </div>
-                        )}
-                    </section>
-                ) : null}
-
-                <section>
-                    <h2 className="mb-2 text-sm font-medium">
-                        Attendance Dashboard
-                    </h2>
-                    {totalMembers > 0 && (
-                        <p className="mb-2 text-muted-foreground text-sm">
-                            Total expected: {totalMembers} · Present:{' '}
-                            {presentCount} · Absent: {absentCount}
-                            {' · '}
-                            <span
-                                className={
-                                    hasQuorum
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : 'text-amber-600 dark:text-amber-400'
-                                }
-                            >
-                                {hasQuorum
-                                    ? 'Quorum Achieved'
-                                    : 'Quorum Not Achieved'}
-                            </span>
-                        </p>
+                {/* Session Meta Info */}
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <Badge variant="outline" className="gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDate(session.session_date)}
+                    </Badge>
+                    {session.committee && (
+                        <Badge variant="outline" className="gap-1">
+                            <Users className="h-3 w-3" />
+                            {session.committee.name}
+                        </Badge>
                     )}
-                    <div className="rounded-lg border border-sidebar-border/70 overflow-hidden dark:border-sidebar-border">
-                        {session.attendances.length === 0 ? (
-                            <p className="p-4 text-muted-foreground text-sm">
-                                No attendance recorded.
-                            </p>
-                        ) : (
-                            <table className="w-full text-left text-sm">
-                                <thead>
-                                    <tr className="border-b border-sidebar-border/70 bg-muted/50 dark:border-sidebar-border">
-                                        <th className="p-3 font-medium">
-                                            Member
-                                        </th>
-                                        <th className="p-3 font-medium">
-                                            Status
-                                        </th>
-                                        {canEdit && (
-                                            <th className="p-3 font-medium">
-                                                Action
-                                            </th>
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {session.attendances.map((a) => (
-                                        <tr
-                                            key={a.id}
-                                            className="border-b border-sidebar-border/70 last:border-b-0 dark:border-sidebar-border"
-                                        >
-                                            <td className="p-3">
-                                                {a.user?.name ?? '—'}
-                                            </td>
-                                            <td className="p-3 capitalize text-muted-foreground">
-                                                {formatStatusWithReason(
-                                                    a.status,
-                                                    a.reason,
-                                                )}
-                                            </td>
-                                            {canEdit && (
-                                                <td className="p-3">
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            openModal(a)
-                                                        }
-                                                    >
-                                                        Update
-                                                    </Button>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                    <Badge 
+                        variant="outline"
+                        className={cn(
+                            "gap-1",
+                            isAttendanceOpen 
+                                ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-900/20 dark:text-green-300"
+                                : ""
                         )}
-                    </div>
-                </section>
+                    >
+                        <div className={cn(
+                            "h-2 w-2 rounded-full",
+                            isAttendanceOpen ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                        )} />
+                        Attendance {isAttendanceOpen ? 'Open' : 'Closed'}
+                    </Badge>
+                    {session.created_by && (
+                        <span className="text-muted-foreground">
+                            Created by {session.created_by.name}
+                        </span>
+                    )}
+                </div>
 
-                <Dialog
-                    open={selectedAttendance !== null}
-                    onOpenChange={(open) => !open && closeModal()}
-                >
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Mark Attendance</DialogTitle>
-                        </DialogHeader>
-                        {selectedAttendance && (
-                            <>
-                                <p className="text-muted-foreground text-sm">
-                                    Member: {selectedAttendance.user?.name ?? '—'}
-                                </p>
-                                <form
-                                    id="attendance-modal-form"
-                                    onSubmit={handleSaveAttendance}
-                                    className="space-y-4"
-                                >
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="modal-status">
-                                            Status
-                                        </Label>
-                                        <select
-                                            id="modal-status"
-                                            value={modalStatus}
-                                            onChange={(e) =>
-                                                setModalStatus(e.target.value)
-                                            }
-                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                        >
-                                            {STATUS_OPTIONS.map((opt) => (
-                                                <option
-                                                    key={opt.value}
-                                                    value={opt.value}
+                {/* Tabs Navigation */}
+                <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <TabsList className="grid w-full max-w-md grid-cols-3">
+                        <TabsTrigger value="overview" className="gap-2">
+                            <Eye className="h-4 w-4" />
+                            Overview
+                        </TabsTrigger>
+                        <TabsTrigger value="attendance" className="gap-2">
+                            <Users className="h-4 w-4" />
+                            Attendance
+                        </TabsTrigger>
+                        <TabsTrigger value="documents" className="gap-2">
+                            <FileText className="h-4 w-4" />
+                            Documents
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* Overview Tab */}
+                    <TabsContent value="overview" className="space-y-4">
+                        {/* QR Code Section for Members */}
+                        {isAssignedToSession && (
+                            <div className="rounded-lg border bg-card overflow-hidden">
+                                <div className="border-b bg-muted/50 px-6 py-4">
+                                    <h2 className="text-lg font-medium flex items-center gap-2">
+                                        <Smartphone className="h-5 w-5 text-muted-foreground" />
+                                        Mark Your Attendance
+                                    </h2>
+                                </div>
+                                <div className="p-6">
+                                    {showQrCode && session.scan_url ? (
+                                        <div className="flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-6">
+                                            <div className="relative group">
+                                                <div 
+                                                    className="inline-flex rounded-xl border-2 bg-white p-4 cursor-pointer transition-all hover:shadow-lg"
+                                                    onClick={() => setShowQrFull(true)}
                                                 >
-                                                    {opt.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="modal-reason">
-                                            Reason (optional)
-                                        </Label>
-                                        <input
-                                            id="modal-reason"
-                                            type="text"
-                                            value={modalReason}
-                                            onChange={(e) =>
-                                                setModalReason(e.target.value)
-                                            }
-                                            placeholder="e.g. sick leave, official travel"
-                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                        />
-                                    </div>
-                                </form>
-                                <DialogFooter>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={closeModal}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        form="attendance-modal-form"
-                                        disabled={submitting}
-                                    >
-                                        {submitting ? 'Saving…' : 'Save'}
-                                    </Button>
-                                </DialogFooter>
-                            </>
+                                                    <QRCodeSVG
+                                                        value={session.scan_url}
+                                                        size={160}
+                                                        level="M"
+                                                        includeMargin
+                                                    />
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
+                                                    onClick={copyQrUrl}
+                                                >
+                                                    {qrCopied ? 
+                                                        <Check className="h-4 w-4 text-green-600" /> : 
+                                                        <Copy className="h-4 w-4" />
+                                                    }
+                                                </Button>
+                                            </div>
+                                            <div className="flex-1 space-y-3">
+                                                <div>
+                                                    <h3 className="font-semibold">Scan to Mark Present</h3>
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        Open your phone's camera and scan this QR code to mark your attendance for this session.
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Button variant="outline" size="sm" className="gap-2" onClick={copyQrUrl}>
+                                                        <Copy className="h-4 w-4" />
+                                                        Copy Link
+                                                    </Button>
+                                                    <Button size="sm" className="gap-2" onClick={() => setShowQrFull(true)}>
+                                                        <QrCode className="h-4 w-4" />
+                                                        View Full QR
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-4">
+                                            <div className="rounded-full bg-muted p-3">
+                                                <Clock className="h-6 w-6 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium">Attendance is currently closed</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    The session secretary will open attendance when the session begins.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         )}
-                    </DialogContent>
-                </Dialog>
 
-                <section>
-                    <h2 className="mb-2 text-sm font-medium">
-                        Resolutions
-                    </h2>
-                    <div className="rounded-lg border border-sidebar-border/70 overflow-hidden dark:border-sidebar-border">
-                        {session.resolutions.length === 0 ? (
-                            <p className="p-4 text-muted-foreground text-sm">
-                                No resolutions for this session.
-                            </p>
-                        ) : (
-                            <table className="w-full text-left text-sm">
-                                <thead>
-                                    <tr className="border-b border-sidebar-border/70 bg-muted/50 dark:border-sidebar-border">
-                                        <th className="p-3 font-medium">#</th>
-                                        <th className="p-3 font-medium">
-                                            Title
-                                        </th>
-                                        <th className="p-3 font-medium">
-                                            Status
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {session.resolutions.map((r) => (
-                                        <tr
-                                            key={r.id}
-                                            className="border-b border-sidebar-border/70 last:border-b-0 dark:border-sidebar-border"
-                                        >
-                                            <td className="p-3 font-medium">
-                                                {r.resolution_number}
-                                            </td>
-                                            <td className="p-3">
-                                                {r.title}
-                                            </td>
-                                            <td className="p-3 capitalize text-muted-foreground">
-                                                {r.status}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        {/* Agenda Section */}
+                        {session.agenda && (
+                            <div className="rounded-lg border bg-card">
+                                <div className="border-b bg-muted/50 px-6 py-4">
+                                    <h2 className="text-lg font-medium flex items-center gap-2">
+                                        <BookOpen className="h-5 w-5 text-muted-foreground" />
+                                        Agenda
+                                    </h2>
+                                </div>
+                                <div className="p-6">
+                                    <div className="prose prose-sm max-w-none">
+                                        <p className="whitespace-pre-wrap text-sm">
+                                            {session.agenda}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
-                    </div>
-                </section>
+
+                        {/* Attendance Dashboard */}
+                        <div className="rounded-lg border bg-card">
+                            <div className="border-b bg-muted/50 px-6 py-4">
+                                <h2 className="text-lg font-medium flex items-center gap-2">
+                                    <Users className="h-5 w-5 text-muted-foreground" />
+                                    Attendance Dashboard
+                                </h2>
+                            </div>
+                            <div className="p-6">
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    {/* Stats Cards */}
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="rounded-lg border p-3">
+                                                <p className="text-xs text-muted-foreground">Total Members</p>
+                                                <p className="text-2xl font-semibold">{totalMembers}</p>
+                                            </div>
+                                            <div className="rounded-lg border border-green-200 bg-green-50/50 p-3">
+                                                <p className="text-xs text-green-600">Present</p>
+                                                <p className="text-2xl font-semibold text-green-600">{presentCount}</p>
+                                            </div>
+                                            <div className="rounded-lg border border-red-200 bg-red-50/50 p-3">
+                                                <p className="text-xs text-red-600">Absent</p>
+                                                <p className="text-2xl font-semibold text-red-600">{absentCount}</p>
+                                            </div>
+                                            <div className="rounded-lg border border-yellow-200 bg-yellow-50/50 p-3">
+                                                <p className="text-xs text-yellow-600">Late</p>
+                                                <p className="text-2xl font-semibold text-yellow-600">{lateCount}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Quorum Status */}
+                                        <div className="rounded-lg border p-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium">Attendance Rate</span>
+                                                <span className="text-sm text-muted-foreground">{attendancePercentage}%</span>
+                                            </div>
+                                            <Progress value={attendancePercentage} className="mt-2 h-2" />
+                                            <div className="mt-3 flex items-center gap-2">
+                                                <div className={cn(
+                                                    "h-2 w-2 rounded-full",
+                                                    hasQuorum ? "bg-green-500" : "bg-amber-500"
+                                                )} />
+                                                <span className={cn(
+                                                    "text-sm font-medium",
+                                                    hasQuorum ? "text-green-600" : "text-amber-600"
+                                                )}>
+                                                    {hasQuorum ? "✓ Quorum Achieved" : "⚠ Quorum Not Achieved"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Recent Activity */}
+                                    <div className="rounded-lg border">
+                                        <div className="border-b bg-muted/30 px-4 py-2">
+                                            <h3 className="text-sm font-medium">Recent Check-ins</h3>
+                                        </div>
+                                        <div className="divide-y max-h-[200px] overflow-auto">
+                                            {session.attendances
+                                                .filter(a => a.time_scanned)
+                                                .slice(0, 5)
+                                                .map(a => (
+                                                    <div key={a.id} className="flex items-center justify-between p-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <User className="h-4 w-4 text-muted-foreground" />
+                                                            <span className="text-sm">{a.user?.name}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {getStatusIcon(a.status)}
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {new Date(a.time_scanned!).toLocaleTimeString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            {session.attendances.filter(a => a.time_scanned).length === 0 && (
+                                                <p className="p-4 text-sm text-muted-foreground text-center">
+                                                    No check-ins yet
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* Attendance Tab */}
+                    <TabsContent value="attendance" className="space-y-4">
+                        <div className="rounded-lg border bg-card">
+                            <div className="border-b bg-muted/50 px-6 py-4">
+                                <h2 className="text-lg font-medium flex items-center gap-2">
+                                    <Users className="h-5 w-5 text-muted-foreground" />
+                                    Attendance Records
+                                </h2>
+                            </div>
+                            <div className="p-6">
+                                {session.attendances.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8">
+                                        <Users className="h-12 w-12 text-muted-foreground/50" />
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            No attendance records yet
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {session.attendances.map((a) => {
+                                            const statusConfig = STATUS_OPTIONS.find(opt => opt.value === a.status);
+                                            const StatusIcon = statusConfig?.icon;
+                                            
+                                            return (
+                                                <div
+                                                    key={a.id}
+                                                    className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/30 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={cn(
+                                                            "flex h-10 w-10 items-center justify-center rounded-full",
+                                                            statusConfig?.bgColor
+                                                        )}>
+                                                            {StatusIcon && (
+                                                                <StatusIcon className={cn("h-5 w-5", statusConfig?.color)} />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium">{a.user?.name}</p>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <Badge 
+                                                                    variant="outline"
+                                                                    className={cn(
+                                                                        "gap-1",
+                                                                        statusConfig?.borderColor
+                                                                    )}
+                                                                >
+                                                                    {StatusIcon && (
+                                                                        <StatusIcon className={cn("h-3 w-3", statusConfig?.color)} />
+                                                                    )}
+                                                                    {formatStatusWithReason(a.status, a.reason)}
+                                                                </Badge>
+                                                                {a.time_scanned && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        Scanned at {new Date(a.time_scanned).toLocaleTimeString()}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {canEdit && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => openModal(a)}
+                                                            className="gap-2"
+                                                        >
+                                                            <Edit3 className="h-4 w-4" />
+                                                            Update
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* Documents Tab */}
+                    <TabsContent value="documents" className="space-y-4">
+                        {/* Minutes Section */}
+                        {(session.minutes_type === 'upload' && session.minutes_file_url) ||
+                         (session.minutes_type === 'text' && session.minutes_content) ? (
+                            <div className="rounded-lg border bg-card">
+                                <div className="border-b bg-muted/50 px-6 py-4">
+                                    <h2 className="text-lg font-medium flex items-center gap-2">
+                                        <FileText className="h-5 w-5 text-muted-foreground" />
+                                        Minutes of the Meeting
+                                    </h2>
+                                </div>
+                                <div className="p-6">
+                                    {session.minutes_type === 'upload' && session.minutes_file_url ? (
+                                        <div className="flex items-center justify-between rounded-lg border p-4">
+                                            <div className="flex items-center gap-3">
+                                                <FileText className="h-8 w-8 text-primary" />
+                                                <div>
+                                                    <p className="font-medium">Minutes Document</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Click to download or view
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Button asChild variant="outline" className="gap-2">
+                                                <a
+                                                    href={session.minutes_file_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                    Download
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="prose prose-sm max-w-none">
+                                            <p className="whitespace-pre-wrap text-sm bg-muted/30 p-4 rounded-lg">
+                                                {session.minutes_content}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : null}
+
+                        {/* Resolutions Section */}
+                        <div className="rounded-lg border bg-card">
+                            <div className="border-b bg-muted/50 px-6 py-4">
+                                <h2 className="text-lg font-medium flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-muted-foreground" />
+                                    Resolutions
+                                </h2>
+                            </div>
+                            <div className="p-6">
+                                {session.resolutions.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8">
+                                        <FileText className="h-12 w-12 text-muted-foreground/50" />
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            No resolutions for this session
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {session.resolutions.map((r) => (
+                                            <div
+                                                key={r.id}
+                                                className="flex items-center justify-between rounded-lg border p-4"
+                                            >
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-mono text-sm text-muted-foreground">
+                                                            #{r.resolution_number}
+                                                        </span>
+                                                        <Badge variant="outline">{r.status}</Badge>
+                                                    </div>
+                                                    <p className="mt-1 font-medium">{r.title}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
+
+            {/* Update Attendance Modal */}
+            <Dialog
+                open={selectedAttendance !== null}
+                onOpenChange={(open) => !open && closeModal()}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Update Attendance</DialogTitle>
+                        <DialogDescription>
+                            Update attendance status for {selectedAttendance?.user?.name}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedAttendance && (
+                        <form id="attendance-modal-form" onSubmit={handleSaveAttendance} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Attendance Status</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {STATUS_OPTIONS.map((opt) => {
+                                        const Icon = opt.icon;
+                                        return (
+                                            <label
+                                                key={opt.value}
+                                                className={cn(
+                                                    "flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-all",
+                                                    modalStatus === opt.value
+                                                        ? `${opt.bgColor} ${opt.borderColor} border-2`
+                                                        : "hover:bg-muted"
+                                                )}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="modal-status"
+                                                    value={opt.value}
+                                                    checked={modalStatus === opt.value}
+                                                    onChange={(e) => setModalStatus(e.target.value)}
+                                                    className="sr-only"
+                                                />
+                                                <Icon className={cn("h-4 w-4", opt.color)} />
+                                                <span className="text-sm">{opt.label}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <Label htmlFor="modal-reason">
+                                    Reason (optional)
+                                </Label>
+                                <input
+                                    id="modal-reason"
+                                    type="text"
+                                    value={modalReason}
+                                    onChange={(e) => setModalReason(e.target.value)}
+                                    placeholder="e.g., sick leave, official travel"
+                                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                />
+                            </div>
+                        </form>
+                    )}
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button type="button" variant="outline" onClick={closeModal}>
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="attendance-modal-form"
+                            disabled={submitting}
+                        >
+                            {submitting ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Full QR Code Modal */}
+            <Dialog open={showQrFull} onOpenChange={setShowQrFull}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Scan QR Code</DialogTitle>
+                        <DialogDescription>
+                            Use your phone's camera to scan this QR code and mark your attendance
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center space-y-4 py-4">
+                        <div className="rounded-xl border-2 bg-white p-6">
+                            {session.scan_url && (
+                                <QRCodeSVG
+                                    value={session.scan_url}
+                                    size={250}
+                                    level="M"
+                                    includeMargin
+                                />
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" className="gap-2" onClick={copyQrUrl}>
+                                {qrCopied ? (
+                                    <>
+                                        <Check className="h-4 w-4" />
+                                        Copied!
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy className="h-4 w-4" />
+                                        Copy Link
+                                    </>
+                                )}
+                            </Button>
+                            <Button asChild variant="outline" className="gap-2">
+                                <a href={session.scan_url || '#'} target="_blank" rel="noopener noreferrer">
+                                    <Eye className="h-4 w-4" />
+                                    Open Link
+                                </a>
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }
