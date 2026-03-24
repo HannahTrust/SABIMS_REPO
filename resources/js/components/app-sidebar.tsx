@@ -54,11 +54,15 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+        <Sidebar
+            collapsible="icon"
+            variant="inset"
+            className="[&_[data-sidebar=sidebar]]:bg-gradient-to-b [&_[data-sidebar=sidebar]]:from-slate-50 [&_[data-sidebar=sidebar]]:to-white [&_[data-sidebar=sidebar]]:shadow-xl [&_[data-sidebar=sidebar]]:shadow-slate-200/60 dark:[&_[data-sidebar=sidebar]]:from-slate-950 dark:[&_[data-sidebar=sidebar]]:to-slate-900 dark:[&_[data-sidebar=sidebar]]:shadow-black/30"
+        >
+            <SidebarHeader className="border-b border-sidebar-border/60 p-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton size="lg" asChild className="rounded-xl px-3">
                             <Link href={dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
@@ -67,11 +71,11 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="px-2 py-3">
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 
-            <SidebarFooter>
+            <SidebarFooter className="border-t border-sidebar-border/60 p-3">
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>

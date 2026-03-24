@@ -8,104 +8,123 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
+import { User, Mail, Lock, UserPlus, ShieldCheck } from 'lucide-react';
+
+const inputClass =
+    'h-11 pl-10 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500/20 transition-shadow';
+const iconClass = 'absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500';
 
 export default function Register() {
     return (
         <AuthLayout
-            title="Create an account"
-            description="Enter your details below to create your account"
+            title="Create account"
+            description="Register your SABIMS officer credentials"
         >
-            <Head title="Register" />
+            <Head title="Register - SABIMS" />
+
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
-                className="flex flex-col gap-6"
+                className="space-y-5"
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="name"
-                                    name="name"
-                                    placeholder="Full name"
-                                />
-                                <InputError
-                                    message={errors.name}
-                                    className="mt-2"
-                                />
+                        <div className="grid gap-5">
+                            <div className="space-y-2">
+                                <Label htmlFor="name" className="text-slate-700 dark:text-slate-200 font-medium">
+                                    Full name
+                                </Label>
+                                <div className="relative">
+                                    <User className={iconClass} />
+                                    <Input
+                                        id="name"
+                                        name="name"
+                                        className={inputClass}
+                                        placeholder="Hon. Juan Dela Cruz"
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                                <InputError message={errors.name} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
-                                />
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-slate-700 dark:text-slate-200 font-medium">
+                                    Email
+                                </Label>
+                                <div className="relative">
+                                    <Mail className={iconClass} />
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        className={inputClass}
+                                        placeholder="sample@example.com"
+                                        required
+                                    />
+                                </div>
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    tabIndex={3}
-                                    autoComplete="new-password"
-                                    name="password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
+                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-slate-700 dark:text-slate-200 font-medium">
+                                        Password
+                                    </Label>
+                                    <div className="relative">
+                                        <Lock className={iconClass} />
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            name="password"
+                                            className={inputClass}
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                    </div>
+                                    <InputError message={errors.password} />
+                                </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-                                <Input
-                                    id="password_confirmation"
-                                    type="password"
-                                    required
-                                    tabIndex={4}
-                                    autoComplete="new-password"
-                                    name="password_confirmation"
-                                    placeholder="Confirm password"
-                                />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
+                                <div className="space-y-2">
+                                    <Label htmlFor="password_confirmation" className="text-slate-700 dark:text-slate-200 font-medium">
+                                        Confirm password
+                                    </Label>
+                                    <div className="relative">
+                                        <ShieldCheck className={iconClass} />
+                                        <Input
+                                            id="password_confirmation"
+                                            type="password"
+                                            name="password_confirmation"
+                                            className={inputClass}
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                    </div>
+                                    <InputError message={errors.password_confirmation} />
+                                </div>
                             </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-2 w-full"
-                                tabIndex={5}
-                                data-test="register-user-button"
-                            >
-                                {processing && <Spinner />}
-                                Create account
-                            </Button>
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        <Button
+                            type="submit"
+                            className="h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white shadow-lg shadow-blue-500/25 hover:bg-blue-700 hover:shadow-blue-500/30 transition-all duration-200 active:scale-[0.99]"
+                            disabled={processing}
+                        >
+                            {processing ? (
+                                <Spinner className="mr-2 h-5 w-5" />
+                            ) : (
+                                <UserPlus className="mr-2 h-5 w-5" />
+                            )}
+                            Register
+                        </Button>
+
+                        <p className="text-center text-sm text-slate-500 dark:text-slate-400 pt-1">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
-                                Log in
+                            <TextLink href={login()} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                Sign in
                             </TextLink>
-                        </div>
+                        </p>
                     </>
                 )}
             </Form>
