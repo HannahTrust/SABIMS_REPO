@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { User, Mail, Lock, UserPlus, ShieldCheck } from 'lucide-react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
-import { User, Mail, Lock, UserPlus, ShieldCheck } from 'lucide-react';
 
 const inputClass =
     'h-11 pl-10 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500/20 transition-shadow';

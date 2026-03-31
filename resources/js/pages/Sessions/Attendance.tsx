@@ -1,8 +1,4 @@
-import { useState } from 'react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
 import { 
     CheckCircle, 
     XCircle, 
@@ -15,7 +11,11 @@ import {
     MessageSquare,
     Calendar
 } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
+import type { BreadcrumbItem } from '@/types';
 
 const STATUS_OPTIONS = [
     { value: 'present', label: 'Present', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50' },

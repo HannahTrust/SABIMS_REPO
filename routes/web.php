@@ -4,7 +4,9 @@ use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CouncilSessionController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrdinanceController;
 use App\Http\Controllers\ResolutionController;
+use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -19,7 +21,7 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Committees: any authenticated user can view index/show; only admin/secretary can create/edit/delete
     Route::get('committees', [CommitteeController::class, 'index'])->name('committees.index');
     Route::get('committees/create', [CommitteeController::class, 'create'])->middleware('role:admin,secretary')->name('committees.create');
@@ -28,7 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('committees/{committee}/edit', [CommitteeController::class, 'edit'])->middleware('role:admin,secretary')->name('committees.edit');
     Route::put('committees/{committee}', [CommitteeController::class, 'update'])->middleware('role:admin,secretary')->name('committees.update');
     Route::delete('committees/{committee}', [CommitteeController::class, 'destroy'])->middleware('role:admin,secretary')->name('committees.destroy');
-    Route::get('committees/{committee}/manage-members', [CommitteeController::class, 'manageMembers'])->middleware('role:admin,secretary,vice_mayor')->name('committees.manage-members');
+    Route::get('committees/{committee}/manage-members', [CommitteeController::class, 'manageMembers'])->middleware('role:super_admin,admin,secretary,vice_mayor')->name('committees.manage-members');
     Route::put('committees/{committee}/manage-members', [CommitteeController::class, 'updateMembers'])->middleware('role:admin,secretary')->name('committees.manage-members.update');
 
     // Sessions: any authenticated user can view index/show/attendance; only secretary can create/edit/delete
@@ -57,6 +59,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('resolutions/{resolution}/edit', [ResolutionController::class, 'edit'])->middleware('role:secretary')->name('resolutions.edit');
     Route::put('resolutions/{resolution}', [ResolutionController::class, 'update'])->middleware('role:secretary')->name('resolutions.update');
     Route::delete('resolutions/{resolution}', [ResolutionController::class, 'destroy'])->middleware('role:secretary')->name('resolutions.destroy');
+
+    // Ordinances: any authenticated user can view index/show; only secretary can create/edit/upload/approve/archive/delete
+    Route::get('ordinances', [OrdinanceController::class, 'index'])->name('ordinances.index');
+    Route::get('ordinances/create', [OrdinanceController::class, 'create'])->middleware('role:secretary')->name('ordinances.create');
+    Route::post('ordinances', [OrdinanceController::class, 'store'])->middleware('role:secretary')->name('ordinances.store');
+    Route::get('ordinances/{ordinance}', [OrdinanceController::class, 'show'])->name('ordinances.show');
+    Route::get('ordinances/{ordinance}/edit', [OrdinanceController::class, 'edit'])->middleware('role:secretary')->name('ordinances.edit');
+    Route::put('ordinances/{ordinance}', [OrdinanceController::class, 'update'])->middleware('role:secretary')->name('ordinances.update');
+    Route::delete('ordinances/{ordinance}', [OrdinanceController::class, 'destroy'])->middleware('role:secretary')->name('ordinances.destroy');
+    Route::post('ordinances/{ordinance}/approve', [OrdinanceController::class, 'approve'])->middleware('role:secretary')->name('ordinances.approve');
+    Route::post('ordinances/{ordinance}/archive', [OrdinanceController::class, 'archive'])->middleware('role:secretary')->name('ordinances.archive');
+
+    // Users / Role Management: only super_admin
+    Route::get('users', [UserManagementController::class, 'index'])->middleware('role:super_admin')->name('users.index');
+    Route::patch('users/{user}/role', [UserManagementController::class, 'updateRole'])->middleware('role:super_admin')->name('users.update-role');
+    Route::patch('users/{user}/status', [UserManagementController::class, 'updateStatus'])->middleware('role:super_admin')->name('users.update-status');
 });
 
 require __DIR__.'/settings.php';

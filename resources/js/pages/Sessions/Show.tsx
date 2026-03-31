@@ -1,21 +1,4 @@
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import {
     Calendar,
     Users,
@@ -34,11 +17,24 @@ import {
     Eye,
     User,
     BookOpen,
-    Camera,
     Smartphone,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import AttendanceController from '@/actions/App/Http/Controllers/AttendanceController';
+import type { BreadcrumbItem } from '@/types';
 
 const STATUS_OPTIONS = [
     { value: 'present', label: 'Present', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
@@ -104,35 +100,9 @@ export default function SessionsShow({
     isAssignedToSession = false,
 }: Props) {
     const { flash } = usePage().props as { flash?: { status?: string } };
-    const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
-    const [modalStatus, setModalStatus] = useState('');
-    const [modalReason, setModalReason] = useState('');
-    const [submitting, setSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
     const [qrCopied, setQrCopied] = useState(false);
     const [showQrFull, setShowQrFull] = useState(false);
-
-    const openModal = (a: Attendance) => {
-        setSelectedAttendance(a);
-        setModalStatus(a.status);
-        setModalReason(a.reason ?? '');
-    };
-
-    const closeModal = () => setSelectedAttendance(null);
-
-    const handleSaveAttendance = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedAttendance) return;
-        setSubmitting(true);
-        router.post(
-            AttendanceController.update.url({ attendance: selectedAttendance.id }),
-            { status: modalStatus, reason: modalReason || null },
-            {
-                onFinish: () => setSubmitting(false),
-                onSuccess: () => closeModal(),
-            },
-        );
-    };
 
     const totalMembers = session.total_expected ?? session.attendances.length;
     const presentCount = session.present_count ??
@@ -140,7 +110,6 @@ export default function SessionsShow({
     const absentCount = session.absent_count ??
         session.attendances.filter((a) => a.status === 'absent').length;
     const lateCount = session.attendances.filter((a) => a.status === 'late').length;
-    const excusedCount = session.attendances.filter((a) => a.status === 'excused').length;
     const hasQuorum = totalMembers > 0 && presentCount > Math.floor(totalMembers / 2);
     const isAttendanceOpen = session.attendance_status === 'open';
     const attendancePercentage = totalMembers > 0 ? Math.round((presentCount / totalMembers) * 100) : 0;
@@ -255,7 +224,7 @@ export default function SessionsShow({
                         <Button asChild variant="outline" className="gap-2">
                             <Link href={`/sessions/${session.id}/attendance`}>
                                 <Users className="h-4 w-4" />
-                                Attendance List
+                                Manage Attendance
                             </Link>
                         </Button>
                         {canEdit && (
@@ -560,17 +529,6 @@ export default function SessionsShow({
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    {canEdit && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => openModal(a)}
-                                                            className="gap-2"
-                                                        >
-                                                            <Edit3 className="h-4 w-4" />
-                                                            Update
-                                                        </Button>
-                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -668,88 +626,13 @@ export default function SessionsShow({
                 </Tabs>
             </div>
 
-            {/* Update Attendance Modal */}
-            <Dialog
-                open={selectedAttendance !== null}
-                onOpenChange={(open) => !open && closeModal()}
-            >
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Update Attendance</DialogTitle>
-                        <DialogDescription>
-                            Update attendance status for {selectedAttendance?.user?.name}
-                        </DialogDescription>
-                    </DialogHeader>
-                    {selectedAttendance && (
-                        <form id="attendance-modal-form" onSubmit={handleSaveAttendance} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Attendance Status</Label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {STATUS_OPTIONS.map((opt) => {
-                                        const Icon = opt.icon;
-                                        return (
-                                            <label
-                                                key={opt.value}
-                                                className={cn(
-                                                    "flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-all",
-                                                    modalStatus === opt.value
-                                                        ? `${opt.bgColor} ${opt.borderColor} border-2`
-                                                        : "hover:bg-muted"
-                                                )}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="modal-status"
-                                                    value={opt.value}
-                                                    checked={modalStatus === opt.value}
-                                                    onChange={(e) => setModalStatus(e.target.value)}
-                                                    className="sr-only"
-                                                />
-                                                <Icon className={cn("h-4 w-4", opt.color)} />
-                                                <span className="text-sm">{opt.label}</span>
-                                            </label>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <Label htmlFor="modal-reason">
-                                    Reason (optional)
-                                </Label>
-                                <input
-                                    id="modal-reason"
-                                    type="text"
-                                    value={modalReason}
-                                    onChange={(e) => setModalReason(e.target.value)}
-                                    placeholder="e.g., sick leave, official travel"
-                                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                />
-                            </div>
-                        </form>
-                    )}
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button type="button" variant="outline" onClick={closeModal}>
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            form="attendance-modal-form"
-                            disabled={submitting}
-                        >
-                            {submitting ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
             {/* Full QR Code Modal */}
             <Dialog open={showQrFull} onOpenChange={setShowQrFull}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Scan QR Code</DialogTitle>
                         <DialogDescription>
-                            Use your phone's camera to scan this QR code and mark your attendance
+                            Use your phone&apos;s camera to scan this QR code and mark your attendance
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col items-center space-y-4 py-4">

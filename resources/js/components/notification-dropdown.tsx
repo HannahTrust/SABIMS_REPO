@@ -1,12 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
 
 export function NotificationDropdown() {
     const { auth, notifications } = usePage().props;

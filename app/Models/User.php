@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_active',
     ];
 
     /**
@@ -50,6 +51,19 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    /** @return list<string> */
+    public static function allowedRoles(): array
+    {
+        return [
+            'super_admin',
+            'admin',
+            'vice_mayor',
+            'secretary',
+            'sb_member',
         ];
     }
 
@@ -65,11 +79,13 @@ class User extends Authenticatable
         $normalized = strtolower(str_replace([' ', '-'], '_', trim($role)));
 
         return match ($normalized) {
+            'super_admin', 'superadmin', 'super_admin_user' => 'super_admin',
             'system_admin' => 'admin',
             'sb_member', 'sbmember' => 'sb_member',
             'vice_mayor', 'vicemayor' => 'vice_mayor',
             'secretary' => 'secretary',
             'admin' => 'admin',
+            'user' => 'sb_member',
             default => $normalized,
         };
     }

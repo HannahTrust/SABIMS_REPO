@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 
 class UserSeeder extends Seeder
 {
@@ -14,6 +15,24 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $password = Hash::make('password');
+        $verifiedAt = Carbon::now();
+
+        $existingSuperAdmin = User::query()
+            ->where('role', 'super_admin')
+            ->first();
+
+        if (! $existingSuperAdmin) {
+            User::updateOrCreate(
+                ['email' => 'superadmin@sabims.test'],
+                [
+                    'name' => 'Super Admin',
+                    'password' => $password,
+                    'role' => 'super_admin',
+                    'is_active' => true,
+                    'email_verified_at' => $verifiedAt,
+                ]
+            );
+        }
 
         User::updateOrCreate(
             ['email' => 'admin@sabims.test'],
@@ -21,6 +40,8 @@ class UserSeeder extends Seeder
                 'name' => 'System Admin',
                 'password' => $password,
                 'role' => 'admin',
+                'is_active' => true,
+                'email_verified_at' => $verifiedAt,
             ]
         );
 
@@ -30,6 +51,8 @@ class UserSeeder extends Seeder
                 'name' => 'Vice Mayor',
                 'password' => $password,
                 'role' => 'vice_mayor',
+                'is_active' => true,
+                'email_verified_at' => $verifiedAt,
             ]
         );
 
@@ -39,6 +62,8 @@ class UserSeeder extends Seeder
                 'name' => 'SB Secretary',
                 'password' => $password,
                 'role' => 'secretary',
+                'is_active' => true,
+                'email_verified_at' => $verifiedAt,
             ]
         );
 
@@ -58,6 +83,8 @@ class UserSeeder extends Seeder
                     'name' => $member['name'],
                     'password' => $password,
                     'role' => 'sb_member',
+                    'is_active' => true,
+                    'email_verified_at' => $verifiedAt,
                 ]
             );
         }

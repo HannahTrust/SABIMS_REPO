@@ -56,7 +56,7 @@ class CouncilSessionController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || $user->role !== 'secretary') {
+        if (! $user || ! $user->hasRole('secretary')) {
             abort(403);
         }
         $committees = Committee::query()->orderBy('name')->get(['id', 'name']);
@@ -92,6 +92,13 @@ class CouncilSessionController extends Controller
         ]);
 
         $session->notifyExpectedMembers();
+
+        logActivity(
+            'create',
+            'session',
+            $session->id,
+            'Created session: '.($session->session_title ?: $session->session_date->toDateString()),
+        );
 
         return redirect()->route('sessions.index')->with('status', 'Session created successfully.');
     }
@@ -165,7 +172,7 @@ class CouncilSessionController extends Controller
     public function edit(Request $request, CouncilSession $session): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || $user->role !== 'secretary') {
+        if (! $user || ! $user->hasRole('secretary')) {
             abort(403);
         }
         $committees = Committee::query()->orderBy('name')->get(['id', 'name']);
@@ -192,16 +199,35 @@ class CouncilSessionController extends Controller
             'agenda' => $request->validated('agenda'),
             'minutes_file' => $request->validated('minutes_file'),
         ]);
+
+        logActivity(
+            'update',
+            'session',
+            $session->id,
+            'Updated session: '.($session->session_title ?: $session->session_date->toDateString()),
+        );
+
         return redirect()->route('sessions.show', $session)->with('status', 'Session updated successfully.');
     }
 
     public function destroy(Request $request, CouncilSession $session): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || $user->role !== 'secretary') {
+        if (! $user || ! $user->hasRole('secretary')) {
             abort(403);
         }
+        $sessionId = $session->id;
+        $sessionTitle = $session->session_title;
+        $sessionDate = $session->session_date;
         $session->delete();
+
+        logActivity(
+            'delete',
+            'session',
+            $sessionId,
+            'Deleted session: '.($sessionTitle ?: $sessionDate->toDateString()),
+        );
+
         return redirect()->route('sessions.index')->with('status', 'Session deleted successfully.');
     }
 }

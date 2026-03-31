@@ -1,9 +1,9 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { FileText, Plus, Pencil, Calendar, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { RESOLUTION_STATUS_CONFIG, isResolutionStatus } from '@/constants/resolution';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Pencil, Calendar, Users } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Resolutions', href: '/resolutions' },
@@ -33,20 +33,10 @@ const statusConfig: Record<string, { label: string; className: string }> = {
         className:
             'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800',
     },
-    pending: {
-        label: 'Pending',
-        className:
-            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800',
-    },
     approved: {
         label: 'Approved',
         className:
             'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800',
-    },
-    rejected: {
-        label: 'Rejected',
-        className:
-            'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
     },
     archived: {
         label: 'Archived',
@@ -56,11 +46,14 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 function StatusBadge({ status }: { status: string }) {
-    const config = statusConfig[status.toLowerCase()] ?? {
-        label: status,
-        className:
-            'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400',
-    };
+    const normalized = status.toLowerCase();
+    const config = isResolutionStatus(normalized)
+        ? RESOLUTION_STATUS_CONFIG[normalized]
+        : statusConfig[normalized] ?? {
+              label: status,
+              className:
+                  'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400',
+          };
     return (
         <span
             className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${config.className}`}

@@ -21,7 +21,7 @@ class CommitteeController extends Controller
     {
         $user = $request->user();
         $canCreate = $user && $user->hasRole('admin', 'secretary');
-        $canManageMembers = $user && $user->hasRole('admin', 'secretary', 'vice_mayor');
+        $canManageMembers = $user && $user->hasRole('super_admin', 'admin', 'secretary', 'vice_mayor');
 
         return Inertia::render('Committees/Index', [
             'committees' => Committee::query()
@@ -41,7 +41,7 @@ class CommitteeController extends Controller
         $committee->load(['members:id,name', 'chair:id,name']);
 
         $user = $request->user();
-        $canManageMembers = $user && $user->hasRole('admin', 'secretary', 'vice_mayor');
+        $canManageMembers = $user && $user->hasRole('super_admin', 'admin', 'secretary', 'vice_mayor');
 
         return Inertia::render('Committees/Show', [
             'committee' => [
@@ -70,6 +70,7 @@ class CommitteeController extends Controller
         if (! $user || ! $user->hasRole('admin', 'secretary')) {
             abort(403);
         }
+
         return Inertia::render('Committees/Create');
     }
 
@@ -79,11 +80,13 @@ class CommitteeController extends Controller
      */
     public function store(StoreCommitteeRequest $request): RedirectResponse
     {
-        Committee::create([
+        $committee = Committee::create([
             'name' => $request->validated('name'),
             'description' => $request->validated('description'),
             'created_by' => $request->user()?->id,
         ]);
+
+        logActivity('create', 'committee', $committee->id, "Created committee: {$committee->name}");
 
         return redirect()->route('committees.index')
             ->with('status', 'Committee created successfully.');
@@ -98,6 +101,7 @@ class CommitteeController extends Controller
         if (! $user || ! $user->hasRole('admin', 'secretary')) {
             abort(403);
         }
+
         return Inertia::render('Committees/Edit', [
             'committee' => [
                 'id' => $committee->id,
@@ -116,6 +120,9 @@ class CommitteeController extends Controller
             'name' => $request->validated('name'),
             'description' => $request->validated('description'),
         ]);
+
+        logActivity('update', 'committee', $committee->id, "Updated committee: {$committee->name}");
+
         return redirect()->route('committees.index')
             ->with('status', 'Committee updated successfully.');
     }
@@ -129,19 +136,24 @@ class CommitteeController extends Controller
         if (! $user || ! $user->hasRole('admin', 'secretary')) {
             abort(403);
         }
+        $committeeId = $committee->id;
+        $committeeName = $committee->name;
         $committee->delete();
+
+        logActivity('delete', 'committee', $committeeId, "Deleted committee: {$committeeName}");
+
         return redirect()->route('committees.index')
             ->with('status', 'Committee deleted successfully.');
     }
 
     /**
      * Show the manage members page for a committee.
-     * Only admin, secretary, or vice_mayor can access.
+     * Only super_admin, admin, secretary, or vice_mayor can access.
      */
     public function manageMembers(Request $request, Committee $committee): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('admin', 'secretary', 'vice_mayor')) {
+        if (! $user || ! $user->hasRole('super_admin', 'admin', 'secretary', 'vice_mayor')) {
             abort(403);
         }
 

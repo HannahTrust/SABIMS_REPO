@@ -1,10 +1,11 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RESOLUTION_STATUSES, RESOLUTION_STATUS_CONFIG } from '@/constants/resolution';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Resolutions', href: '/resolutions' },
@@ -33,7 +34,6 @@ type Props = {
     committees: CommitteeOption[];
 };
 
-const STATUS_OPTIONS = ['draft', 'approved', 'archived'];
 const VISIBILITY_OPTIONS = [
     { value: 'private', label: 'Private' },
     { value: 'public', label: 'Public' },
@@ -158,12 +158,12 @@ export default function ResolutionsEdit({
                                     defaultValue={resolution.status}
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                 >
-                                    {STATUS_OPTIONS.map((st) => (
+                                    {RESOLUTION_STATUSES.map((st) => (
                                         <option
                                             key={st}
                                             value={st}
                                         >
-                                            {st}
+                                            {RESOLUTION_STATUS_CONFIG[st].label}
                                         </option>
                                     ))}
                                 </select>

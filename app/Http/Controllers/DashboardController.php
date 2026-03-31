@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Committee;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,7 +17,7 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $role = $user?->role ?? null;
+        $role = $user ? User::normalizeRole($user->role) : null;
 
         $props = [
             'role' => $role,
@@ -26,7 +27,7 @@ class DashboardController extends Controller
             'total_members' => null,
         ];
 
-        if ($role === 'sb_member') {
+        if ($user && $user->hasRole('sb_member')) {
             $committees = $user->committees()
                 ->with('chair:id,name')
                 ->orderBy('name')
@@ -39,11 +40,11 @@ class DashboardController extends Controller
             ])->values()->all();
         }
 
-        if (in_array($role, ['secretary', 'vice_mayor', 'admin'], true)) {
+        if ($user && $user->hasRole('secretary', 'vice_mayor', 'admin')) {
             $props['total_committees'] = Committee::query()->count();
         }
 
-        if (in_array($role, ['vice_mayor', 'admin'], true)) {
+        if ($user && $user->hasRole('vice_mayor', 'admin')) {
             $props['total_committees_with_chair'] = Committee::query()
                 ->whereNotNull('chair_id')
                 ->count();

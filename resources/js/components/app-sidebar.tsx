@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, Calendar, FileText, Folder, LayoutGrid, Users } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Calendar, FileText, LayoutGrid, Users, Shield } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -12,9 +12,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
-import { dashboard } from '@/routes';
 
 const mainNavItems: NavItem[] = [
     {
@@ -37,6 +37,16 @@ const mainNavItems: NavItem[] = [
         href: '/resolutions',
         icon: FileText,
     },
+    {
+        title: 'Ordinances',
+        href: '/ordinances',
+        icon: FileText,
+    },
+    {
+        title: 'Users',
+        href: '/users',
+        icon: Shield,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -53,6 +63,14 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage().props as { auth?: { user?: { role?: string | null } } };
+    const role = (auth?.user?.role ?? '').toString().toLowerCase();
+    const canManageUsers = role === 'super_admin';
+
+    const items = canManageUsers
+        ? mainNavItems
+        : mainNavItems.filter((i) => i.href !== '/users');
+
     return (
         <Sidebar
             collapsible="icon"
@@ -72,7 +90,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="px-2 py-3">
-                <NavMain items={mainNavItems} />
+                <NavMain items={items} />
             </SidebarContent>
 
             <SidebarFooter className="border-t border-sidebar-border/60 p-3">

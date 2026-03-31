@@ -1,18 +1,16 @@
-import { useState } from 'react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { 
+    Users, 
+    Plus, 
+    Calendar, 
+    Edit3, 
+    Trash2, 
+    UserPlus,
+    Clock,
+    FileText,
+} from 'lucide-react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -23,21 +21,20 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-    Users, 
-    Plus, 
-    Calendar, 
-    Edit3, 
-    Trash2, 
-    UserPlus,
-    MoreVertical,
-    Clock,
-    FileText,
-    X
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -341,7 +338,7 @@ export default function CommitteesIndex({
                                 </div>
 
                                 {/* Hover Effect Overlay */}
-                                <div className="absolute inset-0 rounded-lg ring-1 ring-inset ring-gray-900/5 group-hover:ring-primary/20 dark:ring-white/10" />
+                                <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-gray-900/5 group-hover:ring-primary/20 dark:ring-white/10" />
                             </div>
                         ))}
                     </div>

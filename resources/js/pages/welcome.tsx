@@ -1,6 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login, register } from '@/routes';
-import { useState, useEffect } from 'react';
 import {
     LayoutDashboard,
     FileText,
@@ -22,6 +20,8 @@ import {
     Instagram,
     ArrowRight,
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { dashboard, login, register } from '@/routes';
 
 export default function Welcome({
     canRegister = true,

@@ -22,14 +22,14 @@ class ResolutionController extends Controller
         if (! $user || ! $user->hasRole('admin', 'vice_mayor', 'secretary', 'sb_member')) {
             $query->where('visibility', 'public');
         } else {
-            if ($user->role === 'sb_member') {
+            if ($user->hasRole('sb_member')) {
                 $committeeIds = $user->committees()->pluck('committees.id');
                 $query->whereIn('committee_id', $committeeIds);
             }
         }
 
         $resolutions = $query->orderByDesc('year')->orderBy('resolution_number')->get();
-        $canCreate = $user && $user->role === 'secretary';
+        $canCreate = $user && $user->hasRole('secretary');
 
         return Inertia::render('Resolutions/Index', [
             'resolutions' => $resolutions,
@@ -40,11 +40,12 @@ class ResolutionController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || $user->role !== 'secretary') {
+        if (! $user || ! $user->hasRole('secretary')) {
             abort(403);
         }
         $sessions = CouncilSession::query()->orderByDesc('session_date')->get(['id', 'session_date']);
         $committees = Committee::query()->orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Resolutions/Create', [
             'sessions' => $sessions->map(fn ($s) => ['id' => $s->id, 'session_date' => $s->session_date->toDateString()])->values()->all(),
             'committees' => $committees->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])->values()->all(),
@@ -53,7 +54,7 @@ class ResolutionController extends Controller
 
     public function store(StoreResolutionRequest $request): RedirectResponse
     {
-        Resolution::create([
+        $resolution = Resolution::create([
             'resolution_number' => $request->validated('resolution_number'),
             'title' => $request->validated('title'),
             'description' => $request->validated('description'),
@@ -66,6 +67,14 @@ class ResolutionController extends Controller
             'year' => $request->validated('year'),
             'created_by' => $request->user()->id,
         ]);
+
+        logActivity(
+            'create',
+            'resolution',
+            $resolution->id,
+            "Created resolution: {$resolution->resolution_number} — {$resolution->title}",
+        );
+
         return redirect()->route('resolutions.index')->with('status', 'Resolution created successfully.');
     }
 
@@ -79,6 +88,7 @@ class ResolutionController extends Controller
         }
         $resolution->load(['session:id,session_date', 'committee:id,name', 'createdBy:id,name']);
         $user = $request->user();
+
         return Inertia::render('Resolutions/Show', [
             'resolution' => [
                 'id' => $resolution->id,
@@ -96,18 +106,19 @@ class ResolutionController extends Controller
                 'committee' => $resolution->committee ? ['id' => $resolution->committee->id, 'name' => $resolution->committee->name] : null,
                 'created_by' => $resolution->createdBy ? ['id' => $resolution->createdBy->id, 'name' => $resolution->createdBy->name] : null,
             ],
-            'canEdit' => $user && $user->role === 'secretary',
+            'canEdit' => $user && $user->hasRole('secretary'),
         ]);
     }
 
     public function edit(Request $request, Resolution $resolution): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || $user->role !== 'secretary') {
+        if (! $user || ! $user->hasRole('secretary')) {
             abort(403);
         }
         $sessions = CouncilSession::query()->orderByDesc('session_date')->get(['id', 'session_date']);
         $committees = Committee::query()->orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Resolutions/Edit', [
             'resolution' => [
                 'id' => $resolution->id,
@@ -130,16 +141,35 @@ class ResolutionController extends Controller
     public function update(UpdateResolutionRequest $request, Resolution $resolution): RedirectResponse
     {
         $resolution->update($request->validated());
+
+        logActivity(
+            'update',
+            'resolution',
+            $resolution->id,
+            "Updated resolution: {$resolution->resolution_number} — {$resolution->title}",
+        );
+
         return redirect()->route('resolutions.index')->with('status', 'Resolution updated successfully.');
     }
 
     public function destroy(Request $request, Resolution $resolution): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || $user->role !== 'secretary') {
+        if (! $user || ! $user->hasRole('secretary')) {
             abort(403);
         }
+        $resolutionId = $resolution->id;
+        $resolutionNumber = $resolution->resolution_number;
+        $resolutionTitle = $resolution->title;
         $resolution->delete();
+
+        logActivity(
+            'delete',
+            'resolution',
+            $resolutionId,
+            "Deleted resolution: {$resolutionNumber} — {$resolutionTitle}",
+        );
+
         return redirect()->route('resolutions.index')->with('status', 'Resolution deleted successfully.');
     }
 }

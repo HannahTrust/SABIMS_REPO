@@ -1,12 +1,13 @@
-import { useState } from 'react';
 import { Form, Head, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { FileText, Hash, AlignLeft, Calendar, Users, BarChart2, Vote, Paperclip, ArrowLeft, Lock, Globe } from 'lucide-react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Hash, AlignLeft, Calendar, Users, BarChart2, Vote, Paperclip, ArrowLeft, Lock, Globe } from 'lucide-react';
+import { RESOLUTION_STATUSES, RESOLUTION_STATUS_CONFIG } from '@/constants/resolution';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Resolutions', href: '/resolutions' },
@@ -20,12 +21,6 @@ type Props = {
     sessions: SessionOption[];
     committees: CommitteeOption[];
 };
-
-const STATUS_OPTIONS = [
-    { value: 'draft', label: 'Draft' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'archived', label: 'Archived' },
-];
 
 function FieldIcon({ children }: { children: React.ReactNode }) {
     return (
@@ -208,9 +203,9 @@ export default function ResolutionsCreate({ sessions, committees }: Props) {
                                     <div className="relative">
                                         <FieldIcon><BarChart2 className="h-4 w-4" /></FieldIcon>
                                         <select id="status" name="status" required className={selectClass}>
-                                            {STATUS_OPTIONS.map((st) => (
-                                                <option key={st.value} value={st.value}>
-                                                    {st.label}
+                                            {RESOLUTION_STATUSES.map((st) => (
+                                                <option key={st} value={st}>
+                                                    {RESOLUTION_STATUS_CONFIG[st].label}
                                                 </option>
                                             ))}
                                         </select>
