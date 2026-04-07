@@ -23,14 +23,12 @@ export default defineConfig({
         }),
     ],
     server: {
-        host: '192.168.1.181',
+        host: true,
         port: 5173,
         strictPort: true,
         https: false,
-        origin: 'http://192.168.1.181:5173',
         cors: true,
         hmr: {
-            host: '192.168.1.181',
             protocol: 'ws',
         },
     },
