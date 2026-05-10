@@ -43,7 +43,7 @@ export default function ResolutionsCreate({ sessions, committees }: Props) {
     const [visibility, setVisibility] = useState<'private' | 'public'>('private');
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Create Resolution" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">

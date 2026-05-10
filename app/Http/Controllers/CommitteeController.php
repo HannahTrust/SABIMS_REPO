@@ -20,8 +20,8 @@ class CommitteeController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $canCreate = $user && $user->hasRole('admin', 'secretary');
-        $canManageMembers = $user && $user->hasRole('super_admin', 'admin', 'secretary', 'vice_mayor');
+        $canCreate = $user && ($user->isSuperAdmin() || $user->hasRole('admin', 'sb_secretary'));
+        $canManageMembers = $user && $user->hasRole('super_admin', 'admin', 'sb_secretary', 'vice_mayor');
 
         return Inertia::render('Committees/Index', [
             'committees' => Committee::query()
@@ -41,7 +41,7 @@ class CommitteeController extends Controller
         $committee->load(['members:id,name', 'chair:id,name']);
 
         $user = $request->user();
-        $canManageMembers = $user && $user->hasRole('super_admin', 'admin', 'secretary', 'vice_mayor');
+        $canManageMembers = $user && $user->hasRole('super_admin', 'admin', 'sb_secretary', 'vice_mayor');
 
         return Inertia::render('Committees/Show', [
             'committee' => [
@@ -67,7 +67,7 @@ class CommitteeController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('admin', 'secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('admin', 'sb_secretary'))) {
             abort(403);
         }
 
@@ -76,7 +76,7 @@ class CommitteeController extends Controller
 
     /**
      * Store a newly created committee.
-     * Only admin or secretary can create.
+     * Only admin or sb_secretary can create.
      */
     public function store(StoreCommitteeRequest $request): RedirectResponse
     {
@@ -98,7 +98,7 @@ class CommitteeController extends Controller
     public function edit(Request $request, Committee $committee): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('admin', 'secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('admin', 'sb_secretary'))) {
             abort(403);
         }
 
@@ -133,7 +133,7 @@ class CommitteeController extends Controller
     public function destroy(Request $request, Committee $committee): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('admin', 'secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('admin', 'sb_secretary'))) {
             abort(403);
         }
         $committeeId = $committee->id;
@@ -148,12 +148,12 @@ class CommitteeController extends Controller
 
     /**
      * Show the manage members page for a committee.
-     * Only super_admin, admin, secretary, or vice_mayor can access.
+     * Only super_admin, admin, sb_secretary, or vice_mayor can access.
      */
     public function manageMembers(Request $request, Committee $committee): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('super_admin', 'admin', 'secretary', 'vice_mayor')) {
+        if (! $user || ! $user->hasRole('super_admin', 'admin', 'sb_secretary', 'vice_mayor')) {
             abort(403);
         }
 
@@ -175,7 +175,7 @@ class CommitteeController extends Controller
 
     /**
      * Update committee members and chair.
-     * Only admin or secretary can update.
+     * Only admin or sb_secretary can update.
      */
     public function updateMembers(UpdateCommitteeMembersRequest $request, Committee $committee): RedirectResponse
     {

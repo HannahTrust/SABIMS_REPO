@@ -15,9 +15,9 @@ export default function Login() {
     return (
         <AuthLayout
             title="Welcome"
-            description="Sign in to your SABIMS account"
+            description="Sign in to your eBarangayHub account"
         >
-            <Head title="Login - SABIMS" />
+            <Head title="Login - eBarangayHub" />
 
             <Form {...store.form()} className="space-y-5">
                 {({ processing, errors }) => (

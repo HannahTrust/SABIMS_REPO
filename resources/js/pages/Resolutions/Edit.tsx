@@ -53,7 +53,7 @@ export default function ResolutionsEdit({
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbsWithResolution}>
+        <AppLayout breadcrumbs={breadcrumbsWithResolution} contentWide>
             <Head title={`Edit ${resolution.resolution_number}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <h1 className="text-xl font-semibold">

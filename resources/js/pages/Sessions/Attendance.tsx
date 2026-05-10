@@ -101,7 +101,7 @@ export default function SessionsAttendance({
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title={`Attendance — ${new Date(session.session_date).toLocaleDateString()}`} />
             
             <div className="flex-1 space-y-6 p-6 md:p-8">

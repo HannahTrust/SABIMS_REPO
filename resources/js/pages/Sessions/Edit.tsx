@@ -35,7 +35,7 @@ export default function SessionsEdit({ session, committees }: Props) {
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Edit Session" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <h1 className="text-xl font-semibold">Edit Session</h1>

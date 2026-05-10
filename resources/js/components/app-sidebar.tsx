@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, FileText, LayoutGrid, Users, Shield } from 'lucide-react';
+import { Calendar, ClipboardList, FileText, LayoutGrid, Users, Shield } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -41,6 +41,11 @@ const mainNavItems: NavItem[] = [
         title: 'Ordinances',
         href: '/ordinances',
         icon: FileText,
+    },
+    {
+        title: 'Blotter',
+        href: '/blotter-reports',
+        icon: ClipboardList,
     },
     {
         title: 'Users',

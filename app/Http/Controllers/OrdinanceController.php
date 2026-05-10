@@ -27,7 +27,7 @@ class OrdinanceController extends Controller
             'approver:id,name',
         ]);
 
-        if ($user && $user->hasRole('sb_member')) {
+        if ($user && $user->hasRole('sb_member') && ! $user->isSuperAdmin()) {
             $committeeIds = $user->committees()->pluck('committees.id');
             $query->whereIn('committee_id', $committeeIds);
         }
@@ -63,7 +63,7 @@ class OrdinanceController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $canCreate = $user && $user->hasRole('secretary');
+        $canCreate = $user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary'));
 
         return Inertia::render('Ordinances/Index', [
             'ordinances' => $ordinances->map(fn (Ordinance $o) => [
@@ -84,7 +84,7 @@ class OrdinanceController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
 
@@ -144,7 +144,7 @@ class OrdinanceController extends Controller
         ]);
 
         $user = $request->user();
-        $isSecretary = (bool) ($user && $user->hasRole('secretary'));
+        $isSecretary = (bool) ($user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary')));
 
         $fileUrl = $ordinance->file_path ? Storage::disk('public')->url($ordinance->file_path) : null;
 
@@ -176,7 +176,7 @@ class OrdinanceController extends Controller
     public function edit(Request $request, Ordinance $ordinance): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         if (! $ordinance->isEditable()) {
@@ -258,7 +258,7 @@ class OrdinanceController extends Controller
     public function destroy(Request $request, Ordinance $ordinance): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         if (! $ordinance->isEditable()) {
@@ -278,7 +278,7 @@ class OrdinanceController extends Controller
     public function approve(Request $request, Ordinance $ordinance): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         if ($ordinance->status === Ordinance::STATUS_ARCHIVED) {
@@ -307,7 +307,7 @@ class OrdinanceController extends Controller
     public function archive(Request $request, Ordinance $ordinance): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         if ($ordinance->status !== Ordinance::STATUS_APPROVED) {
@@ -326,4 +326,3 @@ class OrdinanceController extends Controller
         return redirect()->route('ordinances.show', $ordinance)->with('status', 'Ordinance archived successfully.');
     }
 }
-

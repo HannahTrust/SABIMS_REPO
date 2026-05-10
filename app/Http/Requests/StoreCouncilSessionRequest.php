@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCouncilSessionRequest extends FormRequest
@@ -9,7 +10,8 @@ class StoreCouncilSessionRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user && $user->role === 'secretary';
+
+        return $user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary'));
     }
 
     protected function prepareForValidation(): void
@@ -20,7 +22,7 @@ class StoreCouncilSessionRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

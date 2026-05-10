@@ -19,17 +19,17 @@ class ResolutionController extends Controller
         $user = $request->user();
         $query = Resolution::query()->with(['session:id,session_date', 'committee:id,name', 'createdBy:id,name']);
 
-        if (! $user || ! $user->hasRole('admin', 'vice_mayor', 'secretary', 'sb_member')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('admin', 'vice_mayor', 'sb_secretary', 'sb_member'))) {
             $query->where('visibility', 'public');
         } else {
-            if ($user->hasRole('sb_member')) {
+            if ($user->hasRole('sb_member') && ! $user->isSuperAdmin()) {
                 $committeeIds = $user->committees()->pluck('committees.id');
                 $query->whereIn('committee_id', $committeeIds);
             }
         }
 
         $resolutions = $query->orderByDesc('year')->orderBy('resolution_number')->get();
-        $canCreate = $user && $user->hasRole('secretary');
+        $canCreate = $user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary'));
 
         return Inertia::render('Resolutions/Index', [
             'resolutions' => $resolutions,
@@ -40,7 +40,7 @@ class ResolutionController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         $sessions = CouncilSession::query()->orderByDesc('session_date')->get(['id', 'session_date']);
@@ -82,7 +82,7 @@ class ResolutionController extends Controller
     {
         if ($resolution->visibility === 'private') {
             $user = $request->user();
-            if (! $user || ! $user->hasRole('admin', 'vice_mayor', 'secretary', 'sb_member')) {
+            if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('admin', 'vice_mayor', 'sb_secretary', 'sb_member'))) {
                 abort(403, 'You are not authorized to view this resolution.');
             }
         }
@@ -106,14 +106,14 @@ class ResolutionController extends Controller
                 'committee' => $resolution->committee ? ['id' => $resolution->committee->id, 'name' => $resolution->committee->name] : null,
                 'created_by' => $resolution->createdBy ? ['id' => $resolution->createdBy->id, 'name' => $resolution->createdBy->name] : null,
             ],
-            'canEdit' => $user && $user->hasRole('secretary'),
+            'canEdit' => $user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary')),
         ]);
     }
 
     public function edit(Request $request, Resolution $resolution): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         $sessions = CouncilSession::query()->orderByDesc('session_date')->get(['id', 'session_date']);
@@ -155,7 +155,7 @@ class ResolutionController extends Controller
     public function destroy(Request $request, Resolution $resolution): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         $resolutionId = $resolution->id;

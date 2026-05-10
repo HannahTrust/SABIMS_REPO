@@ -40,11 +40,11 @@ class DashboardController extends Controller
             ])->values()->all();
         }
 
-        if ($user && $user->hasRole('secretary', 'vice_mayor', 'admin')) {
+        if ($user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary', 'vice_mayor', 'admin'))) {
             $props['total_committees'] = Committee::query()->count();
         }
 
-        if ($user && $user->hasRole('vice_mayor', 'admin')) {
+        if ($user && ($user->isSuperAdmin() || $user->hasRole('vice_mayor', 'admin'))) {
             $props['total_committees_with_chair'] = Committee::query()
                 ->whereNotNull('chair_id')
                 ->count();

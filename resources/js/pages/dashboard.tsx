@@ -49,8 +49,9 @@ export default function Dashboard({
 }: Props) {
     const showOverview =
         role === 'vice_mayor' ||
-        role === 'admin';
-    const showSecretarySummary = role === 'secretary';
+        role === 'admin' ||
+        role === 'super_admin';
+    const showSecretarySummary = role === 'sb_secretary';
     const showMyCommittees = role === 'sb_member';
 
     return (

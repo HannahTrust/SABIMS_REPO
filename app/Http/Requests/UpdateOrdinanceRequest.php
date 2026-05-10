@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Ordinance;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,15 +12,16 @@ class UpdateOrdinanceRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return (bool) ($user && $user->role === 'secretary');
+
+        return (bool) ($user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary')));
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        /** @var \App\Models\Ordinance $ordinance */
+        /** @var Ordinance $ordinance */
         $ordinance = $this->route('ordinance');
 
         return [
@@ -34,4 +36,3 @@ class UpdateOrdinanceRequest extends FormRequest
         ];
     }
 }
-

@@ -38,7 +38,7 @@ export default function OrdinancesCreate({ sessions, committees, statuses }: Pro
     const [selectedFileName, setSelectedFileName] = useState<string>('');
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Create Ordinance" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">

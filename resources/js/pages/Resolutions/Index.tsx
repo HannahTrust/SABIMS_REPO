@@ -91,7 +91,7 @@ export default function ResolutionsIndex({ resolutions, canCreate }: Props) {
     const { flash } = usePage().props as { flash?: { status?: string } };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Resolutions" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">

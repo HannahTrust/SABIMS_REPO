@@ -66,7 +66,7 @@ export default function CommitteesManageMembers({
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title={`Manage members – ${committee.name}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {flash?.status && (

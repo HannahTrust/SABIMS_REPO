@@ -16,6 +16,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
+        "spatie/laravel-permission": "*",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
@@ -32,6 +33,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Modules\\": "Modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

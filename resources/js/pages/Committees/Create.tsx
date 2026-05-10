@@ -13,7 +13,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function CommitteesCreate() {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Create Committee" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <h1 className="text-xl font-semibold">Create Committee</h1>

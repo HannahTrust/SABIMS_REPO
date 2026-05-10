@@ -91,7 +91,7 @@ export default function CommitteesIndex({
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Committees" />
             
             <div className="flex-1 space-y-6 p-6 md:p-8">

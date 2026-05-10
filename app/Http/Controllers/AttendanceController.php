@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateAttendanceRequest;
 use App\Models\Attendance;
 use App\Models\CouncilSession;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,11 +14,12 @@ use Inertia\Response;
 class AttendanceController extends Controller
 {
     /**
-     * Open attendance for QR scanning. Secretary only.
+     * Open attendance for QR scanning. SB Secretary only.
      */
     public function openAttendance(Request $request, CouncilSession $session): RedirectResponse
     {
-        if (! $request->user()?->hasRole('secretary')) {
+        $user = $request->user();
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
 
@@ -27,11 +29,12 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Close attendance for QR scanning. Secretary only.
+     * Close attendance for QR scanning. SB Secretary only.
      */
     public function closeAttendance(Request $request, CouncilSession $session): RedirectResponse
     {
-        if (! $request->user()?->hasRole('secretary')) {
+        $user = $request->user();
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
 
@@ -127,21 +130,22 @@ class AttendanceController extends Controller
             'time_scanned' => optional($attendance->time_scanned)->toDateTimeString(),
         ]);
     }
+
     /**
      * List attendance for a session. Viewable by vice_mayor, sb_member, admin.
      */
     public function index(Request $request, CouncilSession $session): Response|RedirectResponse
     {
         $user = $request->user();
-        $normalized = $user ? \App\Models\User::normalizeRole($user->role) : null;
-        $canView = $normalized && in_array($normalized, ['vice_mayor', 'sb_member', 'admin', 'secretary'], true);
+        $normalized = $user ? User::normalizeRole($user->role) : null;
+        $canView = $normalized && in_array($normalized, ['vice_mayor', 'sb_member', 'admin', 'sb_secretary', 'super_admin'], true);
         if (! $canView) {
             abort(403);
         }
 
         $session->load(['attendances.user:id,name']);
 
-        $canUpdate = $user && $user->hasRole('secretary');
+        $canUpdate = $user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary'));
 
         return Inertia::render('Sessions/Attendance', [
             'session' => [

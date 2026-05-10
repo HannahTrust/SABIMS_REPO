@@ -18,9 +18,9 @@ export default function Register() {
     return (
         <AuthLayout
             title="Create account"
-            description="Register your SABIMS officer credentials"
+            description="Register your eBarangayHub credentials"
         >
-            <Head title="Register - SABIMS" />
+            <Head title="Register - eBarangayHub" />
 
             <Form
                 {...store.form()}

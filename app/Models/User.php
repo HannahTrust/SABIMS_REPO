@@ -3,17 +3,20 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -25,6 +28,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'barangay_id',
+        'purok_id',
         'is_active',
     ];
 
@@ -62,8 +67,14 @@ class User extends Authenticatable
             'super_admin',
             'admin',
             'vice_mayor',
-            'secretary',
+            'sb_secretary',
             'sb_member',
+            'brgy_admin',
+            'brgy_captain',
+            'brgy_secretary',
+            'lupon_officer',
+            'purok_leader',
+            'resident',
         ];
     }
 
@@ -83,11 +94,26 @@ class User extends Authenticatable
             'system_admin' => 'admin',
             'sb_member', 'sbmember' => 'sb_member',
             'vice_mayor', 'vicemayor' => 'vice_mayor',
-            'secretary' => 'secretary',
+            'sb_secretary', 'sbsecretary' => 'sb_secretary',
+            'secretary' => 'sb_secretary',
+            'brgy_secretary', 'barangay_secretary', 'brgysecretary', 'barangaysecretary' => 'brgy_secretary',
+            'lupon_officer', 'luponofficer', 'lupon' => 'lupon_officer',
+            'brgy_admin', 'barangay_admin', 'brgyadmin', 'barangayadmin' => 'brgy_admin',
+            'brgy_captain', 'barangay_captain', 'brgycaptain', 'barangaycaptain', 'punong_barangay', 'punongbarangay' => 'brgy_captain',
+            'purok_leader', 'purokleader', 'purok' => 'purok_leader',
+            'resident', 'residents', 'citizen' => 'resident',
             'admin' => 'admin',
             'user' => 'sb_member',
             default => $normalized,
         };
+    }
+
+    /**
+     * System-wide administrator (bypasses module role gates via middleware / Gate::before).
+     */
+    public function isSuperAdmin(): bool
+    {
+        return self::normalizeRole($this->role) === 'super_admin';
     }
 
     /**
@@ -102,6 +128,31 @@ class User extends Authenticatable
         $allowed = array_filter(array_map(fn (string $r) => self::normalizeRole($r), $roles));
 
         return in_array($normalized, $allowed, true);
+    }
+
+    /**
+     * The barangay this user belongs to (only for barangay-level roles like
+     * brgy_captain, brgy_secretary, resident, purok_leader).
+     */
+    public function barangay(): BelongsTo
+    {
+        return $this->belongsTo(Barangay::class);
+    }
+
+    /**
+     * Resident assignment to a purok within the barangay.
+     */
+    public function purok(): BelongsTo
+    {
+        return $this->belongsTo(Purok::class);
+    }
+
+    /**
+     * Puroks where this user is the designated leader.
+     */
+    public function ledPuroks(): HasMany
+    {
+        return $this->hasMany(Purok::class, 'purok_leader_user_id');
     }
 
     /**

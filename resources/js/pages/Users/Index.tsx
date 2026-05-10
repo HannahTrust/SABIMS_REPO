@@ -1,8 +1,9 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
-import { Shield, Users, Eye, Pencil, UserCheck, UserX } from 'lucide-react';
+import { Search, Shield, Users, Eye, Pencil, UserCheck, UserX } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -27,7 +28,24 @@ type UserRow = {
 };
 
 type Props = {
-    users: UserRow[];
+    users: {
+        data: UserRow[];
+        links: {
+            url: string | null;
+            label: string;
+            active: boolean;
+        }[];
+        meta: {
+            total: number;
+            from: number | null;
+            to: number | null;
+            current_page: number;
+            last_page: number;
+        };
+    };
+    filters?: {
+        search?: string;
+    };
     allowedRoles: string[];
 };
 
@@ -47,8 +65,8 @@ const ROLE_BADGE: Record<string, { label: string; className: string }> = {
         className:
             'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800',
     },
-    secretary: {
-        label: 'Secretary',
+    sb_secretary: {
+        label: 'SB Secretary',
         className:
             'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800',
     },
@@ -56,6 +74,31 @@ const ROLE_BADGE: Record<string, { label: string; className: string }> = {
         label: 'SB Member',
         className:
             'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
+    },
+    brgy_admin: {
+        label: 'Barangay Admin',
+        className:
+            'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-900/20 dark:text-fuchsia-300 dark:border-fuchsia-800',
+    },
+    brgy_captain: {
+        label: 'Barangay Captain',
+        className:
+            'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800',
+    },
+    brgy_secretary: {
+        label: 'Barangay Secretary',
+        className:
+            'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800',
+    },
+    purok_leader: {
+        label: 'Purok Leader',
+        className:
+            'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800',
+    },
+    resident: {
+        label: 'Resident',
+        className:
+            'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-800',
     },
 };
 
@@ -92,8 +135,7 @@ function StatusBadge({ active }: { active: boolean }) {
     );
 }
 
-export default function UsersIndex({ users, allowedRoles, auth }: Props) {
-export default function UsersIndex({ users, allowedRoles }: Props) {
+export default function UsersIndex({ users, filters, allowedRoles }: Props) {
     const { flash, auth } = usePage().props as {
         flash?: { status?: string };
         auth: { user: { id: number; role?: string | null } };
@@ -108,14 +150,29 @@ export default function UsersIndex({ users, allowedRoles }: Props) {
         user: UserRow;
         is_active: boolean;
     } | null>(null);
+    const [search, setSearch] = useState(filters?.search ?? '');
 
     const rolesForDropdown = useMemo(() => {
         // Only super_admin can access this page; keep options clean.
         return allowedRoles;
     }, [allowedRoles]);
+    const rows = users?.data ?? [];
+
+    const applySearch = () => {
+        router.get(
+            '/users',
+            { search: search.trim() || undefined },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
+
+    const resetSearch = () => {
+        setSearch('');
+        router.get('/users', {}, { preserveScroll: true, replace: true });
+    };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Users" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
@@ -134,49 +191,81 @@ export default function UsersIndex({ users, allowedRoles }: Props) {
                         <div>
                             <h1 className="text-xl font-semibold leading-tight">User Management</h1>
                             <p className="text-xs text-muted-foreground">
-                                Super Admin only • {users.length} users
+                                Super Admin only • {users?.meta?.total ?? 0} users
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Shield className="h-4 w-4" />
-                        Signed in as <span className="font-medium">{auth.user.role ?? '—'}</span>
+                        Signed in as{' '}
+                        <span className="font-medium">{auth?.user?.role ?? '—'}</span>
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <table className="w-full text-left text-sm">
+                <div className="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="relative w-full sm:max-w-md">
+                            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        applySearch();
+                                    }
+                                }}
+                                placeholder="Search name, email, or role..."
+                                className="pl-9"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button type="button" onClick={applySearch}>
+                                Search
+                            </Button>
+                            <Button type="button" variant="outline" onClick={resetSearch}>
+                                Reset
+                            </Button>
+                        </div>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                        Showing {users?.meta?.from ?? 0} to {users?.meta?.to ?? 0} of {users?.meta?.total ?? 0} users
+                    </p>
+                </div>
+
+                <div className="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                    <table className="w-full table-auto text-left text-sm">
                         <thead>
                             <tr className="border-b border-sidebar-border/70 bg-muted/40 dark:border-sidebar-border">
-                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                                     Name
                                 </th>
-                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                                     Email
                                 </th>
-                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                                     Role
                                 </th>
-                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                                     Status
                                 </th>
-                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                                     Created At
                                 </th>
-                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
-                            {users.map((u) => {
-                                const isSelf = auth.user.id === u.id;
+                            {rows.map((u) => {
+                                const isSelf = auth?.user?.id === u.id;
                                 const isSuperAdmin = (u.role ?? '') === 'super_admin';
 
                                 return (
                                     <tr key={u.id} className="group transition-colors hover:bg-muted/30">
-                                        <td className="px-4 py-3 font-medium">{u.name}</td>
-                                        <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                                        <td className="px-4 py-3 font-medium whitespace-nowrap">{u.name}</td>
+                                        <td className="px-4 py-3 text-muted-foreground max-w-[240px] truncate">{u.email}</td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
                                                 <RoleBadge role={u.role} />
@@ -213,7 +302,7 @@ export default function UsersIndex({ users, allowedRoles }: Props) {
                                             {u.created_at ?? '—'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="flex flex-wrap items-center gap-2">
+                                            <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                                                 <Button
                                                     type="button"
                                                     size="sm"
@@ -269,6 +358,25 @@ export default function UsersIndex({ users, allowedRoles }: Props) {
                         </tbody>
                     </table>
                 </div>
+
+                {(users?.links?.length ?? 0) > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 px-1 pb-1">
+                        {users.links.map((link, index) => (
+                            <Link
+                                key={`${link.label}-${index}`}
+                                href={link.url ?? '#'}
+                                className={`rounded-md border px-3 py-1.5 text-xs ${
+                                    link.active
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-sidebar-border/70 hover:bg-muted dark:border-sidebar-border'
+                                } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
+                                preserveScroll
+                                preserveState
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
+                    </div>
+                )}
 
                 {/* View dialog */}
                 <AlertDialog open={!!viewUser} onOpenChange={(open) => !open && setViewUser(null)}>

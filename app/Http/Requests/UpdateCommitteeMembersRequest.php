@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,17 +15,18 @@ class UpdateCommitteeMembersRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user && $user->hasRole('admin', 'secretary', 'vice_mayor');
+
+        return $user && ($user->isSuperAdmin() || $user->hasRole('admin', 'sb_secretary', 'vice_mayor'));
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        $validMemberIds = \App\Models\User::query()
+        $validMemberIds = User::query()
             ->where('role', 'sb_member')
             ->pluck('id')
             ->toArray();

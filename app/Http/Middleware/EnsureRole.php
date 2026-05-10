@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureRole
 {
     /**
-     * Allowed roles (e.g. secretary,admin).
+     * Allowed roles (e.g. sb_secretary,admin).
      *
      * @var array<int, string>
      */
@@ -25,7 +25,7 @@ class EnsureRole
     }
 
     /**
-     * @param  \Closure(Request): (Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, string $roles = ''): Response
     {
@@ -35,6 +35,10 @@ class EnsureRole
         }
 
         $userRole = User::normalizeRole($user->role ?? '');
+        if ($userRole === 'super_admin') {
+            return $next($request);
+        }
+
         $rawAllowed = array_merge(
             $this->roles,
             array_filter(array_map('trim', explode(',', $roles)))

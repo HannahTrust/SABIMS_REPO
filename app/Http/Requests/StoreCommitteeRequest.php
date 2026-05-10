@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,13 +14,14 @@ class StoreCommitteeRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user && $user->hasRole('admin', 'secretary');
+
+        return $user && ($user->isSuperAdmin() || $user->hasRole('admin', 'sb_secretary'));
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

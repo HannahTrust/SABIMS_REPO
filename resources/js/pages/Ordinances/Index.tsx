@@ -54,7 +54,7 @@ export default function OrdinancesIndex({ ordinances, filters, committees, statu
     const years = Array.from({ length: 8 }, (_, i) => String(currentYear - i));
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Ordinances" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">

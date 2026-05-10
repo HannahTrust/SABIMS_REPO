@@ -20,19 +20,43 @@ class UserManagementController extends Controller
             abort(403);
         }
 
+        $search = trim((string) $request->query('search', ''));
+
         $users = User::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('role', 'like', "%{$search}%");
+                });
+            })
             ->orderByDesc('created_at')
-            ->get(['id', 'name', 'email', 'role', 'is_active', 'created_at']);
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Users/Index', [
-            'users' => $users->map(fn (User $u) => [
-                'id' => $u->id,
-                'name' => $u->name,
-                'email' => $u->email,
-                'role' => User::normalizeRole($u->role),
-                'is_active' => (bool) $u->is_active,
-                'created_at' => $u->created_at?->toDateTimeString(),
-            ])->values()->all(),
+            'users' => [
+                'data' => $users->getCollection()->map(fn (User $u) => [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'role' => User::normalizeRole($u->role),
+                    'is_active' => (bool) $u->is_active,
+                    'created_at' => $u->created_at?->toDateTimeString(),
+                ])->values()->all(),
+                'links' => $users->linkCollection()->toArray(),
+                'meta' => [
+                    'total' => $users->total(),
+                    'from' => $users->firstItem(),
+                    'to' => $users->lastItem(),
+                    'current_page' => $users->currentPage(),
+                    'last_page' => $users->lastPage(),
+                ],
+            ],
+            'filters' => [
+                'search' => $search,
+            ],
             'allowedRoles' => User::allowedRoles(),
         ]);
     }
@@ -128,4 +152,3 @@ class UserManagementController extends Controller
         return redirect()->route('users.index')->with('status', 'User status updated successfully.');
     }
 }
-

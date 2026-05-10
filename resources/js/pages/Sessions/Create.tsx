@@ -37,7 +37,7 @@ export default function SessionsCreate({ committees }: Props) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Create Session" />
             
             <div className="flex-1 space-y-6 p-6 md:p-8">

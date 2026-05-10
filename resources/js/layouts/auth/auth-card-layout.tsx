@@ -16,8 +16,15 @@ export default function AuthLayout({ children, title, description }: AuthLayoutP
                     <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20">
                         <Gavel size={40} className="text-blue-400" />
                     </div>
-                    <h2 className="text-3xl font-bold">SABIMS Portal</h2>
-                    <p className="mt-4 text-center text-lg text-blue-100 max-w-md">
+                    <h2 className="text-3xl font-bold">eBarangayHub</h2>
+                    <p className="mt-2 text-sm font-medium uppercase tracking-wider text-blue-200">
+                        Municipal Integrated Governance System
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        SABIMS Module
+                    </span>
+                    <p className="mt-6 text-center text-lg text-blue-100 max-w-md">
                         "Empowering the Sangguniang Bayan with efficient data management and legislative transparency."
                     </p>
                 </div>

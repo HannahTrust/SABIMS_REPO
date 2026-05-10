@@ -3,12 +3,16 @@
 namespace App\Providers;
 
 use App\Models\CouncilSession;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Modules\Blotter\Models\BlotterReport;
+use Modules\Blotter\Policies\BlotterReportPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +31,16 @@ class AppServiceProvider extends ServiceProvider
     {
         require_once app_path('helpers.php');
         Route::bind('session', fn (string $value) => CouncilSession::findOrFail($value));
+        Gate::policy(BlotterReport::class, BlotterReportPolicy::class);
+
+        Gate::before(function ($user, string $ability) {
+            if ($user instanceof User && $user->isSuperAdmin()) {
+                return true;
+            }
+
+            return null;
+        });
+
         $this->configureDefaults();
     }
 

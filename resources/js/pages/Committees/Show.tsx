@@ -45,7 +45,7 @@ export default function CommitteesShow({
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title={committee.name} />
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

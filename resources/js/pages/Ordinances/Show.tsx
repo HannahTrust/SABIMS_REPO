@@ -73,7 +73,7 @@ export default function OrdinancesShow({ ordinance, canEdit, canApprove, canArch
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title={ordinance.ordinance_number ? `Ordinance ${ordinance.ordinance_number}` : `Ordinance #${ordinance.id}`} />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">

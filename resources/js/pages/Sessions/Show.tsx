@@ -166,7 +166,7 @@ export default function SessionsShow({
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title={`Session — ${new Date(session.session_date).toLocaleDateString()}`} />
             
             <div className="flex-1 space-y-6 p-6 md:p-8">

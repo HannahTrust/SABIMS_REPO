@@ -51,7 +51,7 @@ export default function OrdinancesEdit({ ordinance, sessions, committees, status
     const [selectedFileName, setSelectedFileName] = useState<string>('');
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title={`Edit ${ordinance.ordinance_number ?? `Ordinance #${ordinance.id}`}`} />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">

@@ -69,7 +69,7 @@ export default function ResolutionsShow({ resolution, canEdit }: Props) {
     const VisIcon = visConfig.Icon;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title={`Resolution ${resolution.resolution_number}`} />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">

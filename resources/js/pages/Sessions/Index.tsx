@@ -41,7 +41,7 @@ export default function SessionsIndex({ sessions, canCreate }: Props) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Sessions" />
             
             <div className="flex-1 space-y-6 p-6 md:p-8">

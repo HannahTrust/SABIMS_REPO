@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -42,10 +43,10 @@ class CouncilSessionController extends Controller
                 });
             });
         }
-        // Secretary, admin, etc. see all sessions (no extra filter)
+        // SB Secretary, admin, etc. see all sessions (no extra filter)
 
         $sessions = $query->get();
-        $canCreate = $user && $normalizedRole === 'secretary';
+        $canCreate = $user && ($normalizedRole === 'sb_secretary' || $user->isSuperAdmin());
 
         return Inertia::render('Sessions/Index', [
             'sessions' => $sessions,
@@ -56,7 +57,7 @@ class CouncilSessionController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         $committees = Committee::query()->orderBy('name')->get(['id', 'name']);
@@ -83,7 +84,7 @@ class CouncilSessionController extends Controller
             'session_date' => $request->validated('session_date'),
             'committee_id' => $request->validated('committee_id'),
             'attendance_status' => CouncilSession::ATTENDANCE_CLOSED,
-            'qr_token' => \Illuminate\Support\Str::random(64),
+            'qr_token' => Str::random(64),
             'agenda' => $request->validated('agenda'),
             'minutes_type' => $minutesType,
             'minutes_file' => $minutesFile,
@@ -109,7 +110,7 @@ class CouncilSessionController extends Controller
 
         $user = $request->user();
         $normalizedRole = $user ? User::normalizeRole($user->role) : null;
-        $canEdit = $user && $normalizedRole === 'secretary';
+        $canEdit = $user && ($normalizedRole === 'sb_secretary' || $user->isSuperAdmin());
 
         // SB members may only view sessions they are assigned to
         if ($normalizedRole === 'sb_member') {
@@ -172,7 +173,7 @@ class CouncilSessionController extends Controller
     public function edit(Request $request, CouncilSession $session): Response|RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         $committees = Committee::query()->orderBy('name')->get(['id', 'name']);
@@ -213,7 +214,7 @@ class CouncilSessionController extends Controller
     public function destroy(Request $request, CouncilSession $session): RedirectResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('secretary')) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->hasRole('sb_secretary'))) {
             abort(403);
         }
         $sessionId = $session->id;
