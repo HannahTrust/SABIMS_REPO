@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BarangayController;
+use App\Http\Controllers\BarangayOfficialController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CouncilSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrdinanceController;
+use App\Http\Controllers\PurokController;
 use App\Http\Controllers\ResolutionController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +25,61 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
+    // Barangay master data — policies + permissions scope super_admin / brgy_admin
+    Route::prefix('management/barangays')
+        ->middleware('role:super_admin,brgy_admin')
+        ->group(function () {
+            Route::get('/', [BarangayController::class, 'index'])
+                ->middleware('permission:barangay.view')
+                ->name('management.barangays.index');
+            Route::get('/create', [BarangayController::class, 'create'])
+                ->middleware('permission:barangay.create')
+                ->name('management.barangays.create');
+            Route::post('/', [BarangayController::class, 'store'])
+                ->middleware('permission:barangay.create')
+                ->name('management.barangays.store');
+            Route::get('/{barangay}/edit', [BarangayController::class, 'edit'])
+                ->middleware('permission:barangay.view')
+                ->name('management.barangays.edit');
+            Route::put('/{barangay}', [BarangayController::class, 'update'])
+                ->middleware('permission:barangay.update')
+                ->name('management.barangays.update');
+            Route::delete('/{barangay}', [BarangayController::class, 'destroy'])
+                ->middleware('permission:barangay.delete')
+                ->name('management.barangays.destroy');
+
+            Route::prefix('{barangay}')->scopeBindings()->group(function () {
+                Route::get('/puroks', [PurokController::class, 'index'])
+                    ->middleware('permission:purok.view')
+                    ->name('management.barangays.puroks.index');
+                Route::post('/puroks', [PurokController::class, 'store'])
+                    ->middleware('permission:purok.create')
+                    ->name('management.barangays.puroks.store');
+                Route::put('/puroks/{purok}', [PurokController::class, 'update'])
+                    ->middleware('permission:purok.update')
+                    ->name('management.barangays.puroks.update');
+                Route::delete('/puroks/{purok}', [PurokController::class, 'destroy'])
+                    ->middleware('permission:purok.delete')
+                    ->name('management.barangays.puroks.destroy');
+
+                Route::get('/officials', [BarangayOfficialController::class, 'index'])
+                    ->middleware('permission:official.view')
+                    ->name('management.barangays.officials.index');
+                Route::post('/officials', [BarangayOfficialController::class, 'store'])
+                    ->middleware('permission:official.create')
+                    ->name('management.barangays.officials.store');
+                Route::put('/officials/{official}', [BarangayOfficialController::class, 'update'])
+                    ->middleware('permission:official.update')
+                    ->name('management.barangays.officials.update');
+                Route::post('/officials/{official}/end-term', [BarangayOfficialController::class, 'endTerm'])
+                    ->middleware('permission:official.assign')
+                    ->name('management.barangays.officials.end-term');
+                Route::post('/officials/{official}/set-current', [BarangayOfficialController::class, 'setCurrent'])
+                    ->middleware('permission:official.assign')
+                    ->name('management.barangays.officials.set-current');
+            });
+        });
+
     // Committees: any authenticated user can view index/show; only admin/sb_secretary can create/edit/delete
     Route::get('committees', [CommitteeController::class, 'index'])->name('committees.index');
     Route::get('committees/create', [CommitteeController::class, 'create'])->middleware('role:admin,sb_secretary')->name('committees.create');

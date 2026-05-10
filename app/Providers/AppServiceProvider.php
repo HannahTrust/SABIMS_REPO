@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Barangay;
+use App\Models\BarangayOfficial;
 use App\Models\CouncilSession;
+use App\Models\Purok;
 use App\Models\User;
+use App\Policies\BarangayOfficialPolicy;
+use App\Policies\BarangayPolicy;
+use App\Policies\PurokPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
         require_once app_path('helpers.php');
         Route::bind('session', fn (string $value) => CouncilSession::findOrFail($value));
         Gate::policy(BlotterReport::class, BlotterReportPolicy::class);
+        Gate::policy(Barangay::class, BarangayPolicy::class);
+        Gate::policy(Purok::class, PurokPolicy::class);
+        Gate::policy(BarangayOfficial::class, BarangayOfficialPolicy::class);
 
         Gate::before(function ($user, string $ability) {
             if ($user instanceof User && $user->isSuperAdmin()) {

@@ -19,6 +19,10 @@ return new class extends Migration
         });
 
         Schema::table('barangays', function (Blueprint $table) {
+            $table->dropIndex(['captain_id']);
+        });
+
+        Schema::table('barangays', function (Blueprint $table) {
             $table->dropColumn('captain_id');
         });
     }
@@ -26,7 +30,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('barangays', function (Blueprint $table) {
-            $table->unsignedBigInteger('captain_id')->nullable()->index()->after('name');
+            $table->unsignedBigInteger('captain_id')->nullable()->after('name');
+        });
+
+        Schema::table('barangays', function (Blueprint $table) {
+            $table->index('captain_id');
         });
 
         Schema::table('barangays', function (Blueprint $table) {

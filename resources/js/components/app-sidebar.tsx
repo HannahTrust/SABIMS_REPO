@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, ClipboardList, FileText, LayoutGrid, Users, Shield } from 'lucide-react';
+import { Calendar, ClipboardList, FileText, Landmark, LayoutGrid, Shield, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -52,6 +52,11 @@ const mainNavItems: NavItem[] = [
         href: '/users',
         icon: Shield,
     },
+    {
+        title: 'Barangay',
+        href: '/management/barangays',
+        icon: Landmark,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -71,10 +76,18 @@ export function AppSidebar() {
     const { auth } = usePage().props as { auth?: { user?: { role?: string | null } } };
     const role = (auth?.user?.role ?? '').toString().toLowerCase();
     const canManageUsers = role === 'super_admin';
+    const canAccessBarangayManagement = role === 'super_admin' || role === 'brgy_admin';
 
-    const items = canManageUsers
-        ? mainNavItems
-        : mainNavItems.filter((i) => i.href !== '/users');
+    const items = mainNavItems.filter((i) => {
+        if (i.href === '/users' && !canManageUsers) {
+            return false;
+        }
+        if (i.href === '/management/barangays' && !canAccessBarangayManagement) {
+            return false;
+        }
+
+        return true;
+    });
 
     return (
         <Sidebar

@@ -55,7 +55,7 @@ export default function Dashboard({
     const showMyCommittees = role === 'sb_member';
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} contentWide>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4">
                 {showMyCommittees && (
