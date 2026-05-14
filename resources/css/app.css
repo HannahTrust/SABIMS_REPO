@@ -95,6 +95,24 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
+
+    /*
+     * Aliases for Census dashboard inline styles (--color-*, --border-radius-*).
+     * Maps to the app theme so cards, borders, and text track light/dark mode.
+     */
+    --color-background-primary: var(--card);
+    --color-background-secondary: var(--muted);
+    --color-text-primary: var(--foreground);
+    --color-text-secondary: var(--muted-foreground);
+    --color-border-secondary: var(--border);
+    --color-border-tertiary: var(--border);
+    --border-radius-lg: var(--radius-lg);
+    --border-radius-md: var(--radius-md);
+    --font-mono:
+        ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
+        'Liberation Mono', 'Courier New', monospace;
+    --color-text-info: oklch(0.42 0.12 250);
+    --color-background-info: oklch(0.94 0.03 250);
 }
 
 .dark {
@@ -130,6 +148,17 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
+
+    --color-background-primary: var(--card);
+    --color-background-secondary: var(--muted);
+    --color-text-primary: var(--foreground);
+    --color-text-secondary: var(--muted-foreground);
+    --color-border-secondary: var(--border);
+    --color-border-tertiary: var(--border);
+    --border-radius-lg: var(--radius-lg);
+    --border-radius-md: var(--radius-md);
+    --color-text-info: oklch(0.72 0.08 250);
+    --color-background-info: oklch(0.22 0.04 250);
 }
 
 @layer base {

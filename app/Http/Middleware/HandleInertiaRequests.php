@@ -43,6 +43,21 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
+            'census' => [
+                'can_view' => (bool) ($user?->can('resident.view')),
+                'can_create' => (bool) ($user?->can('resident.create')),
+                'can_update' => (bool) ($user?->can('resident.update')),
+                'can_import' => (bool) ($user?->can('resident.import')),
+                'can_manage_households' => (bool) ($user?->can('household.manage')),
+            ],
+            'business_registry' => [
+                'can_view' => (bool) ($user?->can('business.view')),
+                'can_create' => (bool) ($user?->can('business.create')),
+                'can_update' => (bool) ($user?->can('business.update')),
+                'can_delete' => (bool) ($user?->can('business.delete')),
+                'can_renew_permit' => (bool) ($user?->can('business.permit.renew')),
+                'can_generate_clearance' => (bool) ($user?->can('business.clearance.generate')),
+            ],
             'notifications' => $user
                 ? $user->unreadNotifications()->limit(10)->get()->map(fn ($n) => [
                     'id' => $n->id,

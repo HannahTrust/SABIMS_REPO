@@ -55,4 +55,27 @@ class Barangay extends Model
     {
         return $this->hasMany(User::class)->where('role', 'resident');
     }
+
+    /**
+     * Census population records (central residents DB).
+     */
+    public function populationResidents(): HasMany
+    {
+        return $this->hasMany(Resident::class);
+    }
+
+    public function households(): HasMany
+    {
+        return $this->hasMany(Household::class);
+    }
+
+    public function residentImportLogs(): HasMany
+    {
+        return $this->hasMany(ResidentImportLog::class);
+    }
+
+    public function businesses(): HasMany
+    {
+        return $this->hasMany(Business::class);
+    }
 }

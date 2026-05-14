@@ -3,6 +3,15 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayOfficialController;
+use App\Http\Controllers\BusinessRegistry\BusinessController as RegistryBusinessController;
+use App\Http\Controllers\BusinessRegistry\ClearanceController as RegistryClearanceController;
+use App\Http\Controllers\BusinessRegistry\DashboardController as RegistryDashboardController;
+use App\Http\Controllers\BusinessRegistry\DocumentController as RegistryDocumentController;
+use App\Http\Controllers\BusinessRegistry\PermitController as RegistryPermitController;
+use App\Http\Controllers\Census\DashboardController as CensusDashboardController;
+use App\Http\Controllers\Census\HouseholdController as CensusHouseholdController;
+use App\Http\Controllers\Census\ImportController as CensusImportController;
+use App\Http\Controllers\Census\ResidentController as CensusResidentController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CouncilSessionController;
 use App\Http\Controllers\DashboardController;
@@ -10,6 +19,7 @@ use App\Http\Controllers\OrdinanceController;
 use App\Http\Controllers\PurokController;
 use App\Http\Controllers\ResolutionController;
 use App\Http\Controllers\UserManagementController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -133,6 +143,149 @@ Route::middleware(['auth'])->group(function () {
     Route::get('users', [UserManagementController::class, 'index'])->middleware('role:super_admin')->name('users.index');
     Route::patch('users/{user}/role', [UserManagementController::class, 'updateRole'])->middleware('role:super_admin')->name('users.update-role');
     Route::patch('users/{user}/status', [UserManagementController::class, 'updateStatus'])->middleware('role:super_admin')->name('users.update-status');
+
+    Route::prefix('residents')->group(function () {
+        Route::get('dashboard', [CensusDashboardController::class, 'index'])
+            ->middleware('permission:resident.view')
+            ->name('residents.dashboard');
+
+        Route::get('/', [CensusResidentController::class, 'index'])
+            ->middleware('permission:resident.view')
+            ->name('residents.index');
+
+        Route::get('create', [CensusResidentController::class, 'create'])
+            ->middleware('permission:resident.create')
+            ->name('residents.create');
+
+        Route::post('/', [CensusResidentController::class, 'store'])
+            ->middleware('permission:resident.create')
+            ->name('residents.store');
+
+        Route::get('export/csv', [CensusResidentController::class, 'exportCsv'])
+            ->middleware('permission:resident.view')
+            ->name('residents.export.csv');
+
+        Route::get('export/print', [CensusResidentController::class, 'printList'])
+            ->middleware('permission:resident.view')
+            ->name('residents.export.print');
+
+        Route::get('households', [CensusHouseholdController::class, 'index'])
+            ->middleware('permission:household.manage')
+            ->name('residents.households.index');
+
+        Route::post('households', [CensusHouseholdController::class, 'store'])
+            ->middleware('permission:household.manage')
+            ->name('residents.households.store');
+
+        Route::get('households/{household}', [CensusHouseholdController::class, 'show'])
+            ->middleware('permission:household.manage')
+            ->name('residents.households.show');
+
+        Route::put('households/{household}', [CensusHouseholdController::class, 'update'])
+            ->middleware('permission:household.manage')
+            ->name('residents.households.update');
+
+        Route::patch('households/{household}/head', [CensusHouseholdController::class, 'setHead'])
+            ->middleware('permission:household.manage')
+            ->name('residents.households.head');
+
+        Route::get('import', [CensusImportController::class, 'index'])
+            ->middleware('permission:resident.import')
+            ->name('residents.import.index');
+
+        Route::post('import', [CensusImportController::class, 'store'])
+            ->middleware('permission:resident.import')
+            ->name('residents.import.store');
+
+        Route::get('import/{import_log}', [CensusImportController::class, 'show'])
+            ->middleware('permission:resident.import')
+            ->name('residents.import.show');
+
+        Route::post('import/{import_log}/commit', [CensusImportController::class, 'commit'])
+            ->middleware('permission:resident.import')
+            ->name('residents.import.commit');
+
+        Route::get('import/{import_log}/errors', [CensusImportController::class, 'downloadErrors'])
+            ->middleware('permission:resident.import')
+            ->name('residents.import.errors');
+
+        Route::get('{resident}/edit', [CensusResidentController::class, 'edit'])
+            ->whereNumber('resident')
+            ->middleware('permission:resident.update')
+            ->name('residents.edit');
+
+        Route::put('{resident}', [CensusResidentController::class, 'update'])
+            ->whereNumber('resident')
+            ->middleware('permission:resident.update')
+            ->name('residents.update');
+
+        Route::patch('{resident}/archive', [CensusResidentController::class, 'archive'])
+            ->whereNumber('resident')
+            ->middleware('permission:resident.update')
+            ->name('residents.archive');
+    });
+
+    Route::prefix('business-registry')->name('business-registry.')->group(function () {
+        Route::get('dashboard', [RegistryDashboardController::class, 'index'])
+            ->middleware(['permission:business.view'])
+            ->name('dashboard');
+
+        Route::get('analytics', function (Request $request) {
+            return redirect()->route('business-registry.dashboard', $request->query());
+        })->middleware(['permission:business.view'])->name('analytics');
+
+        Route::get('businesses/export/csv', [RegistryBusinessController::class, 'exportCsv'])
+            ->middleware(['permission:business.view'])
+            ->name('businesses.export.csv');
+
+        Route::get('businesses', [RegistryBusinessController::class, 'index'])
+            ->middleware(['permission:business.view'])
+            ->name('businesses.index');
+
+        Route::get('businesses/create', [RegistryBusinessController::class, 'create'])
+            ->middleware(['permission:business.create'])
+            ->name('businesses.create');
+
+        Route::post('businesses', [RegistryBusinessController::class, 'store'])
+            ->middleware(['permission:business.create'])
+            ->name('businesses.store');
+
+        Route::get('businesses/{business}', [RegistryBusinessController::class, 'show'])
+            ->middleware(['permission:business.view'])
+            ->name('businesses.show');
+
+        Route::get('businesses/{business}/edit', [RegistryBusinessController::class, 'edit'])
+            ->middleware(['permission:business.update'])
+            ->name('businesses.edit');
+
+        Route::put('businesses/{business}', [RegistryBusinessController::class, 'update'])
+            ->middleware(['permission:business.update'])
+            ->name('businesses.update');
+
+        Route::patch('businesses/{business}/archive', [RegistryBusinessController::class, 'archive'])
+            ->middleware(['permission:business.delete'])
+            ->name('businesses.archive');
+
+        Route::post('businesses/{business}/permit/renew', [RegistryPermitController::class, 'renew'])
+            ->middleware(['permission:business.permit.renew'])
+            ->name('businesses.permit.renew');
+
+        Route::post('businesses/{business}/clearances', [RegistryClearanceController::class, 'store'])
+            ->middleware(['permission:business.clearance.generate'])
+            ->name('businesses.clearances.store');
+
+        Route::post('businesses/{business}/documents', [RegistryDocumentController::class, 'store'])
+            ->middleware(['permission:business.update'])
+            ->name('businesses.documents.store');
+
+        Route::delete('businesses/{business}/documents/{document}', [RegistryDocumentController::class, 'destroy'])
+            ->middleware(['permission:business.update'])
+            ->name('businesses.documents.destroy');
+
+        Route::get('clearances/{clearance}/print', [RegistryClearanceController::class, 'print'])
+            ->middleware(['permission:business.view'])
+            ->name('clearances.print');
+    });
 });
 
 require __DIR__.'/settings.php';

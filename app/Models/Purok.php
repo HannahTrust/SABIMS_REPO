@@ -48,4 +48,22 @@ class Purok extends Model
         return $this->hasMany(User::class, 'purok_id')
             ->where('role', 'resident');
     }
+
+    /**
+     * Census population records for this purok.
+     */
+    public function populationResidents(): HasMany
+    {
+        return $this->hasMany(Resident::class);
+    }
+
+    public function households(): HasMany
+    {
+        return $this->hasMany(Household::class);
+    }
+
+    public function businesses(): HasMany
+    {
+        return $this->hasMany(Business::class);
+    }
 }

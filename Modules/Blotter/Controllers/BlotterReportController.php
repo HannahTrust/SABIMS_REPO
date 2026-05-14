@@ -3,7 +3,7 @@
 namespace Modules\Blotter\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Resident;
+use App\Models\ResidentUser;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -134,11 +134,11 @@ class BlotterReportController extends Controller
 
         $user = $request->user();
 
-        $residents = Resident::query()
+        $residents = ResidentUser::query()
             ->when($user && ! $user->hasRole('super_admin'), fn (Builder $builder) => $builder->where('barangay_id', $user->barangay_id))
             ->orderBy('name')
             ->get(['id', 'name'])
-            ->map(fn (Resident $resident): array => ['id' => $resident->id, 'name' => $resident->name])
+            ->map(fn (ResidentUser $resident): array => ['id' => $resident->id, 'name' => $resident->name])
             ->values()
             ->all();
 

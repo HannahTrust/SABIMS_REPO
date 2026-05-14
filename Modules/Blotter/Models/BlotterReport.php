@@ -3,7 +3,7 @@
 namespace Modules\Blotter\Models;
 
 use App\Models\Barangay;
-use App\Models\Resident;
+use App\Models\ResidentUser;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -57,12 +57,12 @@ class BlotterReport extends Model
 
     public function complainant(): BelongsTo
     {
-        return $this->belongsTo(Resident::class, 'complainant_id');
+        return $this->belongsTo(ResidentUser::class, 'complainant_id');
     }
 
     public function respondent(): BelongsTo
     {
-        return $this->belongsTo(Resident::class, 'respondent_id');
+        return $this->belongsTo(ResidentUser::class, 'respondent_id');
     }
 
     public function assignedOfficer(): BelongsTo

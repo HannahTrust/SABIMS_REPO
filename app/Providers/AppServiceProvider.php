@@ -4,12 +4,20 @@ namespace App\Providers;
 
 use App\Models\Barangay;
 use App\Models\BarangayOfficial;
+use App\Models\Business;
 use App\Models\CouncilSession;
+use App\Models\Household;
 use App\Models\Purok;
+use App\Models\Resident;
+use App\Models\ResidentImportLog;
 use App\Models\User;
 use App\Policies\BarangayOfficialPolicy;
 use App\Policies\BarangayPolicy;
+use App\Policies\BusinessPolicy;
+use App\Policies\HouseholdPolicy;
 use App\Policies\PurokPolicy;
+use App\Policies\ResidentImportLogPolicy;
+use App\Policies\ResidentPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +49,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Barangay::class, BarangayPolicy::class);
         Gate::policy(Purok::class, PurokPolicy::class);
         Gate::policy(BarangayOfficial::class, BarangayOfficialPolicy::class);
+        Gate::policy(Resident::class, ResidentPolicy::class);
+        Gate::policy(Household::class, HouseholdPolicy::class);
+        Gate::policy(ResidentImportLog::class, ResidentImportLogPolicy::class);
+        Gate::policy(Business::class, BusinessPolicy::class);
 
         Gate::before(function ($user, string $ability) {
             if ($user instanceof User && $user->isSuperAdmin()) {

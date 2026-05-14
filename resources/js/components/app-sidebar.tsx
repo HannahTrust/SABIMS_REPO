@@ -1,5 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, ClipboardList, FileText, Landmark, LayoutGrid, Shield, Users } from 'lucide-react';
+import {
+    Building2,
+    Calendar,
+    ClipboardList,
+    FileText,
+    Landmark,
+    LayoutGrid,
+    Shield,
+    Users,
+    UsersRound,
+} from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -43,6 +53,16 @@ const mainNavItems: NavItem[] = [
         icon: FileText,
     },
     {
+        title: 'Residents',
+        href: '/residents/dashboard',
+        icon: UsersRound,
+    },
+    {
+        title: 'Business Registry',
+        href: '/business-registry/dashboard',
+        icon: Building2,
+    },
+    {
         title: 'Blotter',
         href: '/blotter-reports',
         icon: ClipboardList,
@@ -73,16 +93,28 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
-    const { auth } = usePage().props as { auth?: { user?: { role?: string | null } } };
+    const { auth, census, business_registry } = usePage().props as {
+        auth?: { user?: { role?: string | null } };
+        census?: { can_view?: boolean };
+        business_registry?: { can_view?: boolean };
+    };
     const role = (auth?.user?.role ?? '').toString().toLowerCase();
     const canManageUsers = role === 'super_admin';
     const canAccessBarangayManagement = role === 'super_admin' || role === 'brgy_admin';
+    const canViewResidents = census?.can_view === true;
+    const canViewBusinessRegistry = business_registry?.can_view === true;
 
     const items = mainNavItems.filter((i) => {
         if (i.href === '/users' && !canManageUsers) {
             return false;
         }
         if (i.href === '/management/barangays' && !canAccessBarangayManagement) {
+            return false;
+        }
+        if (i.href === '/residents/dashboard' && !canViewResidents) {
+            return false;
+        }
+        if (i.href === '/business-registry/dashboard' && !canViewBusinessRegistry) {
             return false;
         }
 

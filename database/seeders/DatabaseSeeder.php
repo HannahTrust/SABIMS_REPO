@@ -17,7 +17,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             BlotterPermissionSeeder::class,
             BarangayPermissionSeeder::class,
+            CensusPermissionSeeder::class,
+            BusinessPermissionSeeder::class,
             CommitteeSeeder::class,
+            CensusSeeder::class,
+            BusinessCategorySeeder::class,
         ]);
     }
 }
