@@ -20,6 +20,10 @@ class DatabaseSeeder extends Seeder
             CensusPermissionSeeder::class,
             BusinessPermissionSeeder::class,
             CommitteeSeeder::class,
+            CouncilSessionSeeder::class,
+            AttendanceSeeder::class,
+            ResolutionSeeder::class,
+            OrdinanceSeeder::class,
             CensusSeeder::class,
             BusinessCategorySeeder::class,
         ]);
