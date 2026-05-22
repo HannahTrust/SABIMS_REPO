@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureMunicipalityActive;
+use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -21,11 +23,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleAppearance::class,
+            EnsureMunicipalityActive::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
         $middleware->alias([
+            'platform.admin' => EnsurePlatformAdmin::class,
             'role' => EnsureRole::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,

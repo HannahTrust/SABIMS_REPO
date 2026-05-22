@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBarangayRequest;
 use App\Http\Requests\UpdateBarangayRequest;
 use App\Models\Barangay;
+use App\Models\Municipality;
 use App\Services\BarangayManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,13 +26,16 @@ class BarangayController extends Controller
         $user = $request->user();
 
         $query = Barangay::query()
+            ->with('municipality')
             ->withCount([
                 'users as residents_count' => fn ($q) => $q->where('role', 'resident'),
                 'puroks',
                 'officials as current_officials_count' => fn ($q) => $q->where('is_current', true),
             ]);
 
-        if ($user && $user->hasRole('brgy_admin') && ! $user->isSuperAdmin()) {
+        if ($user && $user->isMunicipalAdmin()) {
+            $query->where('municipality_id', $user->municipality_id);
+        } elseif ($user && $user->hasRole('brgy_admin') && ! $user->isPlatformAdmin()) {
             $query->where('id', $user->barangay_id);
         }
 
@@ -44,9 +48,9 @@ class BarangayController extends Controller
             });
         }
 
-        $municipality = trim((string) $request->query('municipality', ''));
-        if ($municipality !== '') {
-            $query->where('municipality', $municipality);
+        $municipalityFilter = trim((string) $request->query('municipality_id', ''));
+        if ($municipalityFilter !== '' && ctype_digit($municipalityFilter)) {
+            $query->where('municipality_id', (int) $municipalityFilter);
         }
 
         $status = trim((string) $request->query('status', ''));
@@ -62,14 +66,13 @@ class BarangayController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $municipalities = Barangay::query()
-            ->whereNotNull('municipality')
-            ->where('municipality', '!=', '')
-            ->distinct()
-            ->orderBy('municipality')
-            ->pluck('municipality')
-            ->values()
-            ->all();
+        $municipalities = $user?->isPlatformAdmin()
+            ? Municipality::query()->orderBy('name')->get(['id', 'name', 'code'])->map(fn (Municipality $m) => [
+                'id' => $m->id,
+                'name' => $m->name,
+                'code' => $m->code,
+            ])->values()->all()
+            : [];
 
         return Inertia::render('Management/Barangays/Index', [
             'barangays' => collect($barangays->items())->map(fn (Barangay $b) => $this->toBarangayListProps($b))->values()->all(),
@@ -85,7 +88,7 @@ class BarangayController extends Controller
             ],
             'filters' => [
                 'search' => $search,
-                'municipality' => $municipality,
+                'municipality_id' => $municipalityFilter,
                 'status' => $status,
             ],
             'municipalities' => $municipalities,
@@ -109,6 +112,7 @@ class BarangayController extends Controller
         $data = $request->validated();
         unset($data['logo']);
         $data['is_active'] = $request->boolean('is_active', true);
+        $data['municipality_id'] = $this->resolveMunicipalityIdForBarangay($request);
 
         $barangay = $this->barangayManagementService->createBarangay(
             $data,
@@ -181,7 +185,25 @@ class BarangayController extends Controller
             'puroks_count' => (int) ($b->puroks_count ?? 0),
             'current_officials_count' => (int) ($b->current_officials_count ?? 0),
             'logo_url' => $b->logo_path ? Storage::disk('public')->url($b->logo_path) : null,
+            'municipality_id' => $b->municipality_id,
+            'municipality_name' => $b->municipality?->name ?? $b->municipality,
         ];
+    }
+
+    protected function resolveMunicipalityIdForBarangay(Request $request): int
+    {
+        $user = $request->user();
+
+        if ($user?->isMunicipalAdmin()) {
+            return (int) $user->municipality_id;
+        }
+
+        $id = $request->integer('municipality_id');
+        if ($id > 0) {
+            return $id;
+        }
+
+        return (int) Municipality::query()->value('id');
     }
 
     /**

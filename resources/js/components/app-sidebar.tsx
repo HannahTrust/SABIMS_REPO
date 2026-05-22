@@ -1,8 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
     Building2,
     Calendar,
     ClipboardList,
+    FileSpreadsheet,
     FileText,
     Landmark,
     LayoutGrid,
@@ -63,14 +65,29 @@ const mainNavItems: NavItem[] = [
         icon: Building2,
     },
     {
-        title: 'Blotter',
-        href: '/blotter-reports',
+        title: 'Incident Reports',
+        href: '/incident-reports',
         icon: ClipboardList,
     },
     {
         title: 'Users',
         href: '/users',
         icon: Shield,
+    },
+    {
+        title: 'Tenants',
+        href: '/platform/tenants',
+        icon: Building2,
+    },
+    {
+        title: 'Analytics',
+        href: '/platform/analytics',
+        icon: BarChart3,
+    },
+    {
+        title: 'Reports',
+        href: '/platform/reports',
+        icon: FileSpreadsheet,
     },
     {
         title: 'Barangay',
@@ -93,19 +110,37 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
-    const { auth, census, business_registry } = usePage().props as {
+    const { auth, census, business_registry, capabilities } = usePage().props as {
         auth?: { user?: { role?: string | null } };
         census?: { can_view?: boolean };
         business_registry?: { can_view?: boolean };
+        capabilities?: {
+            is_platform_admin?: boolean;
+            is_municipal_admin?: boolean;
+            can_manage_tenants?: boolean;
+            can_manage_municipality_branding?: boolean;
+        };
     };
     const role = (auth?.user?.role ?? '').toString().toLowerCase();
-    const canManageUsers = role === 'super_admin';
-    const canAccessBarangayManagement = role === 'super_admin' || role === 'brgy_admin';
+    const canManageUsers = capabilities?.is_platform_admin === true;
+    const canManageTenants = capabilities?.can_manage_tenants === true;
+    const canAccessBarangayManagement =
+        capabilities?.is_platform_admin === true ||
+        capabilities?.is_municipal_admin === true ||
+        role === 'brgy_admin';
     const canViewResidents = census?.can_view === true;
     const canViewBusinessRegistry = business_registry?.can_view === true;
 
     const items = mainNavItems.filter((i) => {
         if (i.href === '/users' && !canManageUsers) {
+            return false;
+        }
+        if (
+            (i.href === '/platform/tenants' ||
+                i.href === '/platform/analytics' ||
+                i.href === '/platform/reports') &&
+            !canManageTenants
+        ) {
             return false;
         }
         if (i.href === '/management/barangays' && !canAccessBarangayManagement) {

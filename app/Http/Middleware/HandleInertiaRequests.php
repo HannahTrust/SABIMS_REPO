@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Municipality;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,12 +37,21 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $municipality = $user?->resolveMunicipality();
+        $branding = $this->brandingProps($municipality);
 
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
+            'name' => $branding['system_name'],
+            'branding' => $branding,
             'auth' => [
                 'user' => $user,
+            ],
+            'capabilities' => [
+                'is_platform_admin' => (bool) $user?->isPlatformAdmin(),
+                'is_municipal_admin' => (bool) $user?->isMunicipalAdmin(),
+                'can_manage_tenants' => (bool) $user?->isPlatformAdmin(),
+                'can_manage_municipality_branding' => (bool) ($user?->isMunicipalAdmin() || $user?->isPlatformAdmin()),
             ],
             'census' => [
                 'can_view' => (bool) ($user?->can('resident.view')),
@@ -71,6 +81,29 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function brandingProps(?Municipality $municipality): array
+    {
+        if ($municipality !== null) {
+            return [
+                ...$municipality->toBrandingArray(),
+                'municipality_name' => $municipality->name,
+            ];
+        }
+
+        return [
+            'id' => null,
+            'code' => null,
+            'name' => null,
+            'municipality_name' => null,
+            'system_name' => config('app.name', 'eBarangayHub'),
+            'module_name' => 'SABIMS Module',
+            'logo_url' => null,
         ];
     }
 }

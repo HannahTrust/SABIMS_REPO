@@ -16,6 +16,9 @@ use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CouncilSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrdinanceController;
+use App\Http\Controllers\Platform\AnalyticsController as PlatformAnalyticsController;
+use App\Http\Controllers\Platform\MunicipalityController as PlatformMunicipalityController;
+use App\Http\Controllers\Platform\ReportController as PlatformReportController;
 use App\Http\Controllers\PurokController;
 use App\Http\Controllers\ResolutionController;
 use App\Http\Controllers\UserManagementController;
@@ -35,9 +38,27 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
-    // Barangay master data — policies + permissions scope super_admin / brgy_admin
+    // Platform tenant (municipality) management — platform super_admin only
+    Route::prefix('platform')
+        ->middleware(['role:super_admin', 'platform.admin'])
+        ->group(function () {
+            Route::get('analytics', [PlatformAnalyticsController::class, 'index'])->name('platform.analytics.index');
+            Route::get('reports', [PlatformReportController::class, 'index'])->name('platform.reports.index');
+            Route::get('reports/tenants/export', [PlatformReportController::class, 'exportTenants'])->name('platform.reports.tenants.export');
+            Route::get('reports/audit/export', [PlatformReportController::class, 'exportAudit'])->name('platform.reports.audit.export');
+
+            Route::prefix('tenants')->group(function () {
+                Route::get('/', [PlatformMunicipalityController::class, 'index'])->name('platform.tenants.index');
+                Route::get('/create', [PlatformMunicipalityController::class, 'create'])->name('platform.tenants.create');
+                Route::post('/', [PlatformMunicipalityController::class, 'store'])->name('platform.tenants.store');
+                Route::get('/{municipality}/edit', [PlatformMunicipalityController::class, 'edit'])->name('platform.tenants.edit');
+                Route::put('/{municipality}', [PlatformMunicipalityController::class, 'update'])->name('platform.tenants.update');
+            });
+        });
+
+    // Barangay master data — policies + permissions scope platform admin / municipal admin / brgy_admin
     Route::prefix('management/barangays')
-        ->middleware('role:super_admin,brgy_admin')
+        ->middleware('role:super_admin,admin,brgy_admin')
         ->group(function () {
             Route::get('/', [BarangayController::class, 'index'])
                 ->middleware('permission:barangay.view')

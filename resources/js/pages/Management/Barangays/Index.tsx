@@ -30,6 +30,7 @@ type BarangayRow = {
     code: string;
     name: string;
     municipality: string;
+    municipality_name?: string | null;
     province: string;
     region: string;
     is_active: boolean;
@@ -53,8 +54,8 @@ type Pagination = {
 type Props = {
     barangays: BarangayRow[];
     pagination: Pagination;
-    filters: { search: string; municipality: string; status: string };
-    municipalities: string[];
+    filters: { search: string; municipality_id: string; status: string };
+    municipalities: { id: number; name: string; code: string }[];
     can: { create: boolean };
 };
 
@@ -133,19 +134,19 @@ export default function BarangaysIndex({ barangays, pagination, filters, municip
                                         </div>
                                     </div>
                                     <div className="md:col-span-3">
-                                        <Label htmlFor="municipality" className="text-sm font-medium">
-                                            Municipality
+                                        <Label htmlFor="municipality_id" className="text-sm font-medium">
+                                            Tenant municipality
                                         </Label>
                                         <select
-                                            id="municipality"
-                                            name="municipality"
-                                            defaultValue={filters.municipality}
+                                            id="municipality_id"
+                                            name="municipality_id"
+                                            defaultValue={filters.municipality_id}
                                             className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                         >
                                             <option value="">All</option>
                                             {municipalities.map((m) => (
-                                                <option key={m} value={m}>
-                                                    {m}
+                                                <option key={m.id} value={String(m.id)}>
+                                                    {m.name}
                                                 </option>
                                             ))}
                                         </select>
@@ -220,7 +221,9 @@ export default function BarangaysIndex({ barangays, pagination, filters, municip
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-muted-foreground">
-                                                <div className="max-w-[220px] truncate">{b.municipality}</div>
+                                                <div className="max-w-[220px] truncate">
+                                                    {b.municipality_name ?? b.municipality ?? '—'}
+                                                </div>
                                                 <div className="text-xs">{b.province}</div>
                                             </td>
                                             <td className="px-4 py-3">

@@ -56,6 +56,13 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
+            if (! $user->isPlatformAdmin()) {
+                $municipality = $user->resolveMunicipality();
+                if ($municipality !== null && ! $municipality->is_active) {
+                    return null;
+                }
+            }
+
             return Hash::check((string) $request->input('password'), (string) $user->password)
                 ? $user
                 : null;

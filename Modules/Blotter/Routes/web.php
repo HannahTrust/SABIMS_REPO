@@ -5,51 +5,57 @@ use Modules\Blotter\Controllers\BlotterReportController;
 use Modules\Blotter\Models\BlotterReport;
 
 Route::middleware(['auth', 'permission:view_blotter'])->group(function () {
-    Route::get('blotter-reports', [BlotterReportController::class, 'index'])
+    Route::get('incident-reports', [BlotterReportController::class, 'index'])
         ->can('viewAny', BlotterReport::class)
-        ->name('blotter-reports.index');
+        ->name('incident-reports.index');
 
-    Route::get('blotter-reports/create', [BlotterReportController::class, 'create'])
+    Route::get('incident-reports/create', [BlotterReportController::class, 'create'])
         ->middleware('permission:create_blotter')
         ->can('create', BlotterReport::class)
-        ->name('blotter-reports.create');
+        ->name('incident-reports.create');
 
-    Route::post('blotter-reports', [BlotterReportController::class, 'store'])
+    Route::post('incident-reports', [BlotterReportController::class, 'store'])
         ->middleware('permission:create_blotter')
         ->can('create', BlotterReport::class)
-        ->name('blotter-reports.store');
+        ->name('incident-reports.store');
 
-    Route::get('blotter-reports/{blotter_report}', [BlotterReportController::class, 'show'])
+    Route::get('incident-reports/{blotter_report}', [BlotterReportController::class, 'show'])
         ->can('view', 'blotter_report')
-        ->name('blotter-reports.show');
+        ->name('incident-reports.show');
 
-    Route::get('blotter-reports/{blotter_report}/edit', [BlotterReportController::class, 'edit'])
+    Route::get('incident-reports/{blotter_report}/edit', [BlotterReportController::class, 'edit'])
         ->middleware('permission:update_blotter')
         ->can('update', 'blotter_report')
-        ->name('blotter-reports.edit');
+        ->name('incident-reports.edit');
 
-    Route::put('blotter-reports/{blotter_report}', [BlotterReportController::class, 'update'])
+    Route::put('incident-reports/{blotter_report}', [BlotterReportController::class, 'update'])
         ->middleware('permission:update_blotter')
         ->can('update', 'blotter_report')
-        ->name('blotter-reports.update');
+        ->name('incident-reports.update');
 
-    Route::delete('blotter-reports/{blotter_report}', [BlotterReportController::class, 'destroy'])
+    Route::delete('incident-reports/{blotter_report}', [BlotterReportController::class, 'destroy'])
         ->middleware('permission:archive_blotter')
         ->can('delete', 'blotter_report')
-        ->name('blotter-reports.destroy');
+        ->name('incident-reports.destroy');
 
-    Route::post('blotter-reports/{blotter_report}/archive', [BlotterReportController::class, 'archive'])
+    Route::post('incident-reports/{blotter_report}/archive', [BlotterReportController::class, 'archive'])
         ->middleware('permission:archive_blotter')
         ->can('archive', 'blotter_report')
-        ->name('blotter-reports.archive');
+        ->name('incident-reports.archive');
 
-    Route::post('blotter-reports/{blotter_report}/resolve', [BlotterReportController::class, 'resolve'])
+    Route::post('incident-reports/{blotter_report}/resolve', [BlotterReportController::class, 'resolve'])
         ->middleware('permission:resolve_blotter')
         ->can('resolve', 'blotter_report')
-        ->name('blotter-reports.resolve');
+        ->name('incident-reports.resolve');
 
-    Route::get('blotter-reports/{blotter_report}/print', [BlotterReportController::class, 'print'])
+    Route::get('incident-reports/{blotter_report}/print', [BlotterReportController::class, 'print'])
         ->middleware('permission:print_blotter')
         ->can('print', 'blotter_report')
-        ->name('blotter-reports.print');
+        ->name('incident-reports.print');
+
+    Route::permanentRedirect('blotter-reports', '/incident-reports')->name('blotter-reports.index');
+    Route::permanentRedirect('blotter-reports/create', '/incident-reports/create');
+    Route::permanentRedirect('blotter-reports/{blotter_report}', '/incident-reports/{blotter_report}');
+    Route::permanentRedirect('blotter-reports/{blotter_report}/edit', '/incident-reports/{blotter_report}/edit');
+    Route::permanentRedirect('blotter-reports/{blotter_report}/print', '/incident-reports/{blotter_report}/print');
 });

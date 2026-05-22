@@ -3,9 +3,10 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "build:ssr": "vite build && vite build --ssr",
-        "dev": "cross-env LARAVEL_BYPASS_ENV_CHECK=1 vite",
+        "wayfinder": "php artisan wayfinder:generate --with-form",
+        "build": "npm run wayfinder && vite build",
+        "build:ssr": "npm run wayfinder && vite build && vite build --ssr",
+        "dev": "npm run wayfinder && cross-env LARAVEL_BYPASS_ENV_CHECK=1 vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",

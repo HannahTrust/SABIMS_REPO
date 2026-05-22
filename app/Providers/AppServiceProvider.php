@@ -7,6 +7,7 @@ use App\Models\BarangayOfficial;
 use App\Models\Business;
 use App\Models\CouncilSession;
 use App\Models\Household;
+use App\Models\Municipality;
 use App\Models\Purok;
 use App\Models\Resident;
 use App\Models\ResidentImportLog;
@@ -15,6 +16,7 @@ use App\Policies\BarangayOfficialPolicy;
 use App\Policies\BarangayPolicy;
 use App\Policies\BusinessPolicy;
 use App\Policies\HouseholdPolicy;
+use App\Policies\MunicipalityPolicy;
 use App\Policies\PurokPolicy;
 use App\Policies\ResidentImportLogPolicy;
 use App\Policies\ResidentPolicy;
@@ -46,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         require_once app_path('helpers.php');
         Route::bind('session', fn (string $value) => CouncilSession::findOrFail($value));
         Gate::policy(BlotterReport::class, BlotterReportPolicy::class);
+        Gate::policy(Municipality::class, MunicipalityPolicy::class);
         Gate::policy(Barangay::class, BarangayPolicy::class);
         Gate::policy(Purok::class, PurokPolicy::class);
         Gate::policy(BarangayOfficial::class, BarangayOfficialPolicy::class);
@@ -55,7 +58,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Business::class, BusinessPolicy::class);
 
         Gate::before(function ($user, string $ability) {
-            if ($user instanceof User && $user->isSuperAdmin()) {
+            if ($user instanceof User && $user->isPlatformAdmin()) {
                 return true;
             }
 

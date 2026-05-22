@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Committee;
 use App\Models\User;
+use App\Services\Platform\PlatformDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -11,12 +12,21 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        protected PlatformDashboardService $platformDashboard
+    ) {}
+
     /**
      * Display the dashboard with role-based data.
      */
     public function index(Request $request): Response
     {
         $user = $request->user();
+
+        if ($user?->isPlatformAdmin()) {
+            return Inertia::render('dashboard/platform', $this->platformDashboard->build());
+        }
+
         $role = $user ? User::normalizeRole($user->role) : null;
 
         $props = [
@@ -40,11 +50,11 @@ class DashboardController extends Controller
             ])->values()->all();
         }
 
-        if ($user && ($user->isSuperAdmin() || $user->hasRole('sb_secretary', 'vice_mayor', 'admin'))) {
+        if ($user && ($user->hasRole('sb_secretary', 'vice_mayor', 'admin') || $user->isSuperAdmin())) {
             $props['total_committees'] = Committee::query()->count();
         }
 
-        if ($user && ($user->isSuperAdmin() || $user->hasRole('vice_mayor', 'admin'))) {
+        if ($user && ($user->hasRole('vice_mayor', 'admin') || $user->isSuperAdmin())) {
             $props['total_committees_with_chair'] = Committee::query()
                 ->whereNotNull('chair_id')
                 ->count();

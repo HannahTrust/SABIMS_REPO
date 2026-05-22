@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Barangay;
+use App\Models\Municipality;
 use Illuminate\Database\Seeder;
 
 class BarangaySeeder extends Seeder
@@ -15,6 +16,10 @@ class BarangaySeeder extends Seeder
      */
     public function run(): void
     {
+        $municipalityId = Municipality::query()
+            ->where('code', 'default-lgu')
+            ->value('id');
+
         $barangays = [
             ['code' => 'B-01', 'name' => 'Barangay Poblacion'],
             ['code' => 'B-02', 'name' => 'Barangay San Isidro'],
@@ -48,6 +53,7 @@ class BarangaySeeder extends Seeder
                 ['code' => $b['code']],
                 [
                     'name' => $b['name'],
+                    'municipality_id' => $municipalityId,
                     'is_active' => true,
                 ]
             );

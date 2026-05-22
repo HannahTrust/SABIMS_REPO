@@ -34,10 +34,12 @@ class BarangayPermissionSeeder extends Seeder
         }
 
         $superAdmin = Role::findOrCreate('super_admin', 'web');
+        $municipalAdmin = Role::findOrCreate('admin', 'web');
         $brgyAdmin = Role::findOrCreate('brgy_admin', 'web');
 
         foreach ($permissions as $permission) {
             $superAdmin->givePermissionTo($permission);
+            $municipalAdmin->givePermissionTo($permission);
         }
 
         $brgyBarangayPermissions = [

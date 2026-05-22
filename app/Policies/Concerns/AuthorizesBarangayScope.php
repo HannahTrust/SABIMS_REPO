@@ -9,8 +9,13 @@ trait AuthorizesBarangayScope
 {
     protected function managesBarangay(User $user, Barangay $barangay): bool
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isPlatformAdmin()) {
             return true;
+        }
+
+        if ($user->isMunicipalAdmin()) {
+            return $user->municipality_id !== null
+                && (int) $user->municipality_id === (int) $barangay->municipality_id;
         }
 
         $normalized = User::normalizeRole($user->role ?? '');

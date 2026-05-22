@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Barangay;
+use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -82,8 +83,12 @@ class UserSeeder extends Seeder
         $password = Hash::make('password');
         $verifiedAt = Carbon::now();
 
+        $defaultMunicipalityId = Municipality::query()
+            ->where('code', 'default-lgu')
+            ->value('id');
+
         $this->seedSystemUsers($password, $verifiedAt);
-        $this->seedSbMembers($password, $verifiedAt);
+        $this->seedSbMembers($password, $verifiedAt, $defaultMunicipalityId);
         $this->seedBarangayUsers($password, $verifiedAt);
     }
 
@@ -92,6 +97,10 @@ class UserSeeder extends Seeder
      */
     private function seedSystemUsers(string $password, Carbon $verifiedAt): void
     {
+        $defaultMunicipalityId = Municipality::query()
+            ->where('code', 'default-lgu')
+            ->value('id');
+
         $existingSuperAdmin = User::query()->where('role', 'super_admin')->first();
 
         if (! $existingSuperAdmin) {
@@ -101,6 +110,7 @@ class UserSeeder extends Seeder
                     'name' => 'Super Admin',
                     'password' => $password,
                     'role' => 'super_admin',
+                    'municipality_id' => null,
                     'barangay_id' => null,
                     'is_active' => true,
                     'email_verified_at' => $verifiedAt,
@@ -111,9 +121,10 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'admin@sabims.test'],
             [
-                'name' => 'System Admin',
+                'name' => 'Municipal Administrator',
                 'password' => $password,
                 'role' => 'admin',
+                'municipality_id' => $defaultMunicipalityId,
                 'barangay_id' => null,
                 'is_active' => true,
                 'email_verified_at' => $verifiedAt,
@@ -126,6 +137,7 @@ class UserSeeder extends Seeder
                 'name' => 'Vice Mayor',
                 'password' => $password,
                 'role' => 'vice_mayor',
+                'municipality_id' => $defaultMunicipalityId,
                 'barangay_id' => null,
                 'is_active' => true,
                 'email_verified_at' => $verifiedAt,
@@ -138,6 +150,7 @@ class UserSeeder extends Seeder
                 'name' => 'SB Secretary',
                 'password' => $password,
                 'role' => 'sb_secretary',
+                'municipality_id' => $defaultMunicipalityId,
                 'barangay_id' => null,
                 'is_active' => true,
                 'email_verified_at' => $verifiedAt,
@@ -148,7 +161,7 @@ class UserSeeder extends Seeder
     /**
      * 6 SB members (legislative council members).
      */
-    private function seedSbMembers(string $password, Carbon $verifiedAt): void
+    private function seedSbMembers(string $password, Carbon $verifiedAt, ?int $defaultMunicipalityId): void
     {
         $sbMembers = [
             ['name' => 'Maria Santos',      'email' => 'maria.santos@sabims.test'],
@@ -166,6 +179,7 @@ class UserSeeder extends Seeder
                     'name' => $member['name'],
                     'password' => $password,
                     'role' => 'sb_member',
+                    'municipality_id' => $defaultMunicipalityId,
                     'barangay_id' => null,
                     'is_active' => true,
                     'email_verified_at' => $verifiedAt,

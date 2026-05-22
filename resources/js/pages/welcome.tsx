@@ -83,7 +83,7 @@ const modules: ModuleCard[] = [
         Icon: AlertTriangle,
         title: 'Incident Reporting',
         description: 'Barangay-level incident logs, Purok Leader reports, and end-to-end monitoring of cases.',
-        status: 'coming-soon',
+        status: 'available',
         accent: 'from-rose-50 to-rose-100/60 dark:from-rose-900/20 dark:to-rose-800/10 border-rose-200 dark:border-rose-800/40',
         iconBg: 'bg-rose-100 dark:bg-rose-900/40',
         iconColor: 'text-rose-600 dark:text-rose-400',

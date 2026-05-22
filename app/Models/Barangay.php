@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Barangay extends Model
@@ -13,6 +14,7 @@ class Barangay extends Model
     protected $fillable = [
         'code',
         'name',
+        'municipality_id',
         'municipality',
         'province',
         'region',
@@ -28,6 +30,11 @@ class Barangay extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    public function municipality(): BelongsTo
+    {
+        return $this->belongsTo(Municipality::class);
     }
 
     /**

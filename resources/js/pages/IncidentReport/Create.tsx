@@ -3,20 +3,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, ArrowRight, CheckCircle2, FileText, Plus, Trash2, Upload } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Plus, Trash2, Upload } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { ResidentSearchSelect } from '@/components/blotter/resident-search-select';
+import { ResidentSearchSelect } from '@/components/incident-report/resident-search-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Blotter Reports', href: '/blotter-reports' },
-    { title: 'Create', href: '/blotter-reports/create' },
+    { title: 'Incident Reports', href: '/incident-reports' },
+    { title: 'Create', href: '/incident-reports/create' },
 ];
 
-const blotterSchema = z
+const incidentReportSchema = z
     .object({
         purok_id: z.string().optional(),
         incident_type_id: z.string().min(1, 'Incident type is required'),
@@ -77,7 +77,7 @@ const blotterSchema = z
         }
     });
 
-type CreateBlotterForm = z.infer<typeof blotterSchema>;
+type CreateIncidentReportForm = z.infer<typeof incidentReportSchema>;
 
 type Option = { id: number; name: string };
 
@@ -97,7 +97,7 @@ const stepTitles = [
     'Review & Submit',
 ];
 
-const defaultValues: CreateBlotterForm = {
+const defaultValues: CreateIncidentReportForm = {
     purok_id: '',
     incident_type_id: '',
     incident_datetime: '',
@@ -116,7 +116,7 @@ const defaultValues: CreateBlotterForm = {
     attachments: [],
 };
 
-export default function BlotterCreate({ incidentTypes, residents, officers, purokOptions }: Props) {
+export default function IncidentReportCreate({ incidentTypes, residents, officers, purokOptions }: Props) {
     const [step, setStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,8 +128,8 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
         trigger,
         formState: { errors },
         handleSubmit,
-    } = useForm<CreateBlotterForm>({
-        resolver: zodResolver(blotterSchema),
+    } = useForm<CreateIncidentReportForm>({
+        resolver: zodResolver(incidentReportSchema),
         defaultValues,
     });
 
@@ -156,7 +156,7 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
         }
     }, [complainantId, respondentId, respondentMode, setValue]);
 
-    const stepFields: Array<Array<keyof CreateBlotterForm>> = useMemo(
+    const stepFields: Array<Array<keyof CreateIncidentReportForm>> = useMemo(
         () => [
             ['incident_type_id', 'incident_datetime', 'incident_location', 'purok_id'],
             ['complainant_id', 'respondent_mode', 'respondent_id', 'respondent_name'],
@@ -177,7 +177,7 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
 
     const previousStep = () => setStep((prev) => Math.max(prev - 1, 0));
 
-    const onSubmit = (values: CreateBlotterForm) => {
+    const onSubmit = (values: CreateIncidentReportForm) => {
         setIsSubmitting(true);
         const formData = new FormData();
         formData.append('purok_id', values.purok_id ?? '');
@@ -202,7 +202,7 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
 
         values.attachments.forEach((file) => formData.append('attachments[]', file));
 
-        router.post('/blotter-reports', formData, {
+        router.post('/incident-reports', formData, {
             forceFormData: true,
             onFinish: () => setIsSubmitting(false),
         });
@@ -210,15 +210,15 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
 
     return (
         <AppLayout breadcrumbs={breadcrumbs} contentWide>
-            <Head title="Create Blotter Report" />
+            <Head title="New Incident Report" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <FileText className="h-5 w-5" />
+                        <AlertTriangle className="h-5 w-5" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-semibold leading-tight">Create Blotter Report</h1>
+                        <h1 className="text-xl font-semibold leading-tight">New Incident Report</h1>
                         <p className="text-xs text-muted-foreground">
                             Step {step + 1} of {stepTitles.length}: {stepTitles[step]}
                         </p>
@@ -474,7 +474,7 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
                                     <CheckCircle2 className="mt-0.5 h-4 w-4" />
                                     <div>
                                         <p className="text-sm font-medium">Review before submit</p>
-                                        <p className="text-xs">Verify details, witnesses, and attachments before creating the blotter report.</p>
+                                        <p className="text-xs">Verify details, witnesses, and attachments before submitting the incident report.</p>
                                     </div>
                                 </div>
                             </div>
@@ -498,7 +498,7 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
 
                     <div className="mt-6 flex items-center justify-between border-t border-sidebar-border/70 pt-4 dark:border-sidebar-border">
                         <Button type="button" variant="ghost" asChild>
-                            <Link href="/blotter-reports">
+                            <Link href="/incident-reports">
                                 <ArrowLeft className="mr-1 h-4 w-4" />
                                 Cancel
                             </Link>
@@ -518,7 +518,7 @@ export default function BlotterCreate({ incidentTypes, residents, officers, puro
                                 </Button>
                             ) : (
                                 <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? 'Submitting...' : 'Submit Blotter'}
+                                    {isSubmitting ? 'Submitting...' : 'Submit Report'}
                                 </Button>
                             )}
                         </div>

@@ -1,5 +1,6 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
+import { useBranding } from '@/components/branding-logo';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -8,6 +9,11 @@ export default function AuthSimpleLayout({
     title,
     description,
 }: AuthLayoutProps) {
+    const branding = useBranding();
+    const { branding: pageBranding } = usePage().props as {
+        branding?: { municipality_name?: string | null };
+    };
+
     return (
         <div className="flex min-h-dvh flex-col bg-slate-50 dark:bg-slate-950 lg:flex-row">
             {/* Left column: Logo & branding — 50% on desktop */}
@@ -18,24 +24,34 @@ export default function AuthSimpleLayout({
                     <Link
                         href={home()}
                         className="focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-800 rounded-2xl"
-                        aria-label="eBarangayHub Home"
+                        aria-label={`${branding.system_name} Home`}
                     >
                         <div className="animate-auth-logo flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/10 shadow-xl backdrop-blur-md sm:h-28 sm:w-28 lg:h-32 lg:w-32">
-                            <AppLogoIcon className="h-12 w-12 fill-white text-white drop-shadow-lg sm:h-14 sm:w-14 lg:h-16 lg:w-16 animate-auth-logo-glow" />
+                            {branding.logo_url ? (
+                                <img
+                                    src={branding.logo_url}
+                                    alt=""
+                                    className="h-16 w-16 object-contain sm:h-20 sm:w-20"
+                                />
+                            ) : (
+                                <AppLogoIcon className="h-12 w-12 fill-white text-white drop-shadow-lg sm:h-14 sm:w-14 lg:h-16 lg:w-16 animate-auth-logo-glow" />
+                            )}
                         </div>
                     </Link>
                     <h2 className="mt-6 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                        eBarangayHub
+                        {branding.system_name}
                     </h2>
                     <p className="mt-2 text-sm text-blue-100 sm:text-base">
-                        Municipal Integrated Governance System
+                        {pageBranding?.municipality_name ?? 'Municipal Integrated Governance System'}
                     </p>
-                    <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        SABIMS Module
-                    </span>
+                    {branding.module_name ? (
+                        <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            {branding.module_name}
+                        </span>
+                    ) : null}
                     <p className="mt-6 hidden text-left text-sm leading-relaxed text-blue-100/90 lg:block">
-                        The legislative module of eBarangayHub — empowering the Sangguniang Bayan with efficient data management and legislative transparency.
+                        Empowering local government with efficient data management and transparency.
                     </p>
                 </div>
             </div>

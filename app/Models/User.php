@@ -28,6 +28,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'municipality_id',
         'barangay_id',
         'purok_id',
         'is_active',
@@ -114,6 +115,53 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return self::normalizeRole($this->role) === 'super_admin';
+    }
+
+    /**
+     * Platform operator (vendor): super_admin with no tenant scope.
+     */
+    public function isPlatformAdmin(): bool
+    {
+        return $this->isSuperAdmin() && $this->municipality_id === null;
+    }
+
+    /**
+     * Municipal administrator for a single LGU tenant.
+     */
+    public function isMunicipalAdmin(): bool
+    {
+        return self::normalizeRole($this->role) === 'admin'
+            && $this->municipality_id !== null;
+    }
+
+    public function municipality(): BelongsTo
+    {
+        return $this->belongsTo(Municipality::class);
+    }
+
+    /**
+     * Resolve the tenant municipality for the current user.
+     */
+    public function resolveMunicipality(): ?Municipality
+    {
+        if ($this->municipality_id !== null) {
+            return $this->municipality;
+        }
+
+        if ($this->barangay_id !== null) {
+            $municipalityId = $this->barangay?->municipality_id;
+
+            return $municipalityId !== null
+                ? Municipality::query()->find($municipalityId)
+                : null;
+        }
+
+        return null;
+    }
+
+    public function resolveMunicipalityId(): ?int
+    {
+        return $this->resolveMunicipality()?->id;
     }
 
     /**
