@@ -1,3 +1,4 @@
+import AppLogoIcon from '@/components/app-logo-icon';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard,
@@ -12,7 +13,6 @@ import {
     MapPin,
     FileSignature,
     Landmark,
-    Building2,
     Facebook,
     Twitter,
     Instagram,
@@ -215,8 +215,8 @@ export default function Welcome({
                         <div className="flex justify-between items-center h-16 md:h-20">
                             {/* Logo */}
                             <Link href="/" className="flex items-center space-x-3 group">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/30 transition-shadow">
-                                    <Building2 className="w-5 h-5 text-white" />
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-lg transition-shadow group-hover:shadow-blue-500/30">
+                                    <AppLogoIcon className="h-12 w-12 object-contain" />
                                 </div>
                                 <div className="hidden sm:block">
                                     <h1 className="font-bold text-lg text-slate-800 dark:text-white leading-tight">
@@ -702,9 +702,7 @@ export default function Welcome({
                         <div className="grid md:grid-cols-4 gap-8 mb-8">
                             <div>
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                                        <Building2 className="w-4 h-4 text-white" />
-                                    </div>
+                                    <AppLogoIcon className="h-10 w-10 shrink-0 object-contain" />
                                     <span className="font-bold text-slate-800 dark:text-white">eBarangayHub</span>
                                 </div>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">

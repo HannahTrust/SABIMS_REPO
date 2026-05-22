@@ -15,7 +15,7 @@ type Props = {
 };
 
 const sizeMap = {
-    sm: { box: 'size-8', icon: 'size-5', title: 'text-sm', subtitle: 'text-[10px]' },
+    sm: { box: 'size-12', icon: 'h-full w-full max-h-full max-w-full', title: 'text-sm', subtitle: 'text-[10px]' },
     md: { box: 'size-10', icon: 'size-6', title: 'text-base', subtitle: 'text-xs' },
     lg: { box: 'h-24 w-24 sm:h-28 sm:w-28', icon: 'h-12 w-12 sm:h-14 sm:w-14', title: 'text-2xl sm:text-3xl', subtitle: 'text-sm' },
 };
@@ -37,12 +37,14 @@ export default function BrandingLogo({ size = 'sm', showSubtitle = true, classNa
     return (
         <div className={`flex items-center gap-3 ${className}`}>
             <div
-                className={`flex ${s.box} shrink-0 items-center justify-center overflow-hidden rounded-md bg-sidebar-primary text-sidebar-primary-foreground`}
+                className={`flex ${s.box} shrink-0 items-center justify-center overflow-hidden rounded-md ${
+                    branding.logo_url ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'bg-transparent'
+                }`}
             >
                 {branding.logo_url ? (
                     <img src={branding.logo_url} alt="" className="h-full w-full object-contain p-0.5" />
                 ) : (
-                    <AppLogoIcon className={`${s.icon} fill-current text-white dark:text-black ${iconClassName}`} />
+                    <AppLogoIcon className={`${s.icon} object-contain ${iconClassName}`} />
                 )}
             </div>
             <div className="grid text-left leading-tight">
